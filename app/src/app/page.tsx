@@ -1,13 +1,16 @@
 "use client"
 import { Button } from "@/components/ui/button"
-import { UploadCloud, History, Settings, ArrowRight, BrainCircuit, Check, Loader2, Sparkles, Image as ImageIcon, Send } from "lucide-react"
+import { UploadCloud, History, ArrowRight, BrainCircuit, Check, Loader2, Sparkles, Image as ImageIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { useRef, useState, useEffect } from "react"
+import { useRef, useState, useEffect, useCallback } from "react"
 import { cn } from "@/lib/utils"
+import { ThemeToggle } from "@/components/ui/theme-toggle"
+import { useToast } from "@/components/ui/toast"
 
 export default function Home() {
   const router = useRouter()
+  const { addToast } = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [isUploading, setIsUploading] = useState(false)
@@ -15,6 +18,7 @@ export default function Home() {
   const [inputText, setInputText] = useState("")
   const [pastedImage, setPastedImage] = useState<File | null>(null)
   const [isHovering, setIsHovering] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
 
   // Auto-focus textarea on load
   useEffect(() => {
@@ -31,6 +35,7 @@ export default function Home() {
         const file = imageItem.getAsFile()
         if (file) {
           setPastedImage(file)
+          addToast('Image added', 'success', 2000)
         }
       }
     }
@@ -82,6 +87,7 @@ export default function Home() {
 
       setIsUploading(false)
       setUploadSuccess(true)
+      addToast('Problem analyzed successfully!', 'success')
 
       // Navigate to solve page with the new problem ID
       setTimeout(() => {
@@ -90,7 +96,9 @@ export default function Home() {
     } catch (error) {
       console.error('Upload error:', error)
       setIsUploading(false)
-      setUploadError(error instanceof Error ? error.message : 'Failed to process problem')
+      const errorMessage = error instanceof Error ? error.message : 'Failed to process problem'
+      setUploadError(errorMessage)
+      addToast(errorMessage, 'error')
     }
   }
 
@@ -104,6 +112,41 @@ export default function Home() {
     fileInputRef.current?.click()
   }
 
+  // Drag & drop handlers
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(true)
+  }, [])
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+  }, [])
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+
+    const files = e.dataTransfer.files
+    if (files && files[0] && files[0].type.startsWith('image/')) {
+      setPastedImage(files[0])
+      addToast('Image added', 'success', 2000)
+    }
+  }, [addToast])
+
+  // Keyboard shortcut for submit (Cmd/Ctrl + Enter)
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      e.preventDefault()
+      if (inputText.trim() || pastedImage) {
+        handleUploadProcess()
+      }
+    }
+  }, [inputText, pastedImage])
+
   return (
     <div className="min-h-screen bg-background font-sans text-foreground selection:bg-primary/30 overflow-x-hidden relative">
 
@@ -115,7 +158,7 @@ export default function Home() {
 
       {/* Header */}
       <header className="sticky top-0 z-50 flex h-20 items-center justify-between border-b border-white/5 bg-background/60 px-6 sm:px-10 backdrop-blur-xl">
-        <div className="flex items-center gap-3 group cursor-pointer">
+        <Link href="/" className="flex items-center gap-3 group cursor-pointer">
           <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-indigo-600 text-white shadow-lg shadow-primary/20 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3">
             <BrainCircuit className="h-6 w-6" />
             <div className="absolute inset-0 rounded-xl bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -123,15 +166,8 @@ export default function Home() {
           <h1 className="text-xl font-bold tracking-tight text-foreground transition-all group-hover:text-primary">
             SolveWithMe
           </h1>
-        </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-muted-foreground hover:bg-white/10 hover:text-foreground rounded-full transition-all duration-300"
-          onClick={() => alert("Settings would open here")}
-        >
-          <Settings className="h-5 w-5" />
-        </Button>
+        </Link>
+        <ThemeToggle />
       </header>
 
       <main className="relative z-10 flex flex-col items-center justify-center px-4 py-16 sm:px-12 min-h-[calc(100vh-80px)]">
@@ -160,14 +196,31 @@ export default function Home() {
             className="w-full max-w-2xl mx-auto relative group"
             onMouseEnter={() => setIsHovering(true)}
             onMouseLeave={() => setIsHovering(false)}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
           >
             <div className={cn(
               "absolute -inset-1 rounded-[2rem] bg-gradient-to-r from-primary via-indigo-500 to-violet-500 opacity-20 blur-xl transition-opacity duration-500 group-hover:opacity-40",
-              (inputText || pastedImage) ? "opacity-40" : ""
+              (inputText || pastedImage) && "opacity-40",
+              isDragging && "opacity-60"
             )} />
 
-            <div className="relative glass-panel rounded-[1.5rem] p-2 transition-all duration-300 shadow-2xl">
-              <div className="rounded-[1.25rem] bg-card/60 backdrop-blur-xl border border-white/5 overflow-hidden flex flex-col">
+            <div className={cn(
+              "relative glass-panel rounded-[1.5rem] p-2 transition-all duration-300 shadow-2xl",
+              isDragging && "ring-2 ring-primary ring-offset-2 ring-offset-background"
+            )}>
+              <div className="rounded-[1.25rem] bg-card/60 backdrop-blur-xl border border-white/5 overflow-hidden flex flex-col relative">
+
+                {/* Drag overlay */}
+                {isDragging && (
+                  <div className="absolute inset-0 bg-primary/10 backdrop-blur-sm flex items-center justify-center z-10 rounded-[1.25rem]">
+                    <div className="flex flex-col items-center gap-2 text-primary">
+                      <UploadCloud className="h-10 w-10 animate-bounce" />
+                      <span className="font-semibold">Drop image here</span>
+                    </div>
+                  </div>
+                )}
 
                 {/* Textarea */}
                 <textarea
@@ -175,8 +228,9 @@ export default function Home() {
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   onPaste={handlePaste}
-                  placeholder="Type a math problem or paste an image (Ctrl+V)..."
-                  className="w-full min-h-[120px] bg-transparent border-0 p-6 text-lg placeholder:text-muted-foreground/50 resize-none focus:outline-none focus:ring-0"
+                  onKeyDown={handleKeyDown}
+                  placeholder="Type a math problem or paste/drop an image..."
+                  className="w-full min-h-[140px] bg-transparent border-0 p-6 text-lg placeholder:text-muted-foreground/50 resize-none focus:outline-none focus:ring-0"
                 />
 
                 {/* Attachment Preview */}
@@ -233,6 +287,7 @@ export default function Home() {
                       "h-10 px-6 rounded-full font-semibold transition-all duration-300 shadow-lg shadow-primary/20",
                       (inputText.trim() || pastedImage) ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-muted text-muted-foreground hover:bg-muted"
                     )}
+                    title="Submit (⌘+Enter)"
                   >
                     {isUploading ? (
                       <div className="flex items-center gap-2">
@@ -306,10 +361,5 @@ export default function Home() {
       </main>
     </div>
   )
-}
-
-function isDragging(hovering: boolean) {
-  // Simple visual logic helper for now, could be expanded to actual drag state
-  return hovering;
 }
 

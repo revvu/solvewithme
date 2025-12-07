@@ -21,9 +21,11 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Verify attempt
+    const parentContent = subproblem.parent?.content as { text?: string; image_url?: string } | null ?? null;
+    const subproblemContent = subproblem.content as { text?: string; image_url?: string };
     const llmResult = await llmService.verifySubproblem(
-      subproblem.parent?.content,
-      subproblem.content,
+      parentContent,
+      subproblemContent,
       { images: userWorkImages, text: userText }
     );
 

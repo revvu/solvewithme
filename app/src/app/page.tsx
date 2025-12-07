@@ -4,13 +4,44 @@ import { Card, CardContent } from "@/components/ui/card"
 import { UploadCloud, History, Settings, ArrowRight, BrainCircuit, Check, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { useRef, useState } from "react"
+import { useRef, useState, useEffect } from "react"
 
 export default function Home() {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadSuccess, setUploadSuccess] = useState(false)
+
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      if (e.clipboardData?.items) {
+        const items = Array.from(e.clipboardData.items)
+        const imageItem = items.find(item => item.type.startsWith('image/'))
+
+        if (imageItem) {
+          e.preventDefault()
+          const file = imageItem.getAsFile()
+          if (file) {
+            // Re-use logic for file handling
+            setIsUploading(true)
+            // Function to simulate upload delay
+            const simulateUpload = async () => {
+              await new Promise(resolve => setTimeout(resolve, 1500))
+              setIsUploading(false)
+              setUploadSuccess(true)
+              setTimeout(() => {
+                router.push("/solve/1")
+              }, 500)
+            }
+            simulateUpload()
+          }
+        }
+      }
+    }
+
+    window.addEventListener('paste', handlePaste)
+    return () => window.removeEventListener('paste', handlePaste)
+  }, [router])
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -70,7 +101,7 @@ export default function Home() {
                 </div>
                 <h3 className="text-2xl font-semibold tracking-tight">Upload a Problem</h3>
                 <p className="mt-3 text-muted-foreground max-w-xs text-sm leading-relaxed">
-                  Drop a screenshot or take a photo. <br /> AI will guide you to the solution.
+                  Drop a screenshot, <span className="text-primary font-medium">paste (Ctrl+V)</span>, or take a photo. <br /> AI will guide you to the solution.
                 </p>
                 <div className="hidden">
                   <input

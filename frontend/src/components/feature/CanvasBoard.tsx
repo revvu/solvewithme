@@ -67,6 +67,16 @@ export function CanvasBoard() {
           className={`w-6 h-6 rounded-full border-2 ${color === "#3b82f6" ? "border-zinc-900 scale-110" : "border-transparent"} bg-blue-500 transition-all`}
           aria-label="Blue pen"
         />
+        <button
+          onClick={() => setColor("#ffffff")}
+          className={`w-6 h-6 rounded-full border-2 ${color === "#ffffff" ? "border-zinc-900 scale-110" : "border-transparent"} bg-white shadow-sm transition-all`}
+          aria-label="White pen"
+        />
+        <button
+          onClick={() => setColor("#fbbf24")}
+          className={`w-6 h-6 rounded-full border-2 ${color === "#fbbf24" ? "border-zinc-900 scale-110" : "border-transparent"} bg-amber-400 transition-all`}
+          aria-label="Yellow pen"
+        />
 
         <div className="w-px h-6 bg-zinc-200 dark:bg-zinc-700" />
 

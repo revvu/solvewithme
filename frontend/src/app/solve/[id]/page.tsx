@@ -2,6 +2,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import dynamic from "next/dynamic"
+import { useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, MessageSquare, CheckCircle, HelpCircle, BrainCircuit } from "lucide-react"
 import { ProblemHeader } from "@/components/feature/ProblemHeader"
@@ -13,7 +14,9 @@ const CanvasBoard = dynamic(
   { ssr: false, loading: () => <div className="w-full h-full bg-zinc-50 dark:bg-zinc-900 animate-pulse" /> }
 )
 
-export default function SolvePage({ params }: { params: { id: string } }) {
+export default function SolvePage() {
+  const params = useParams()
+  const id = Array.isArray(params.id) ? params.id[0] : params.id
   const [isChatOpen, setIsChatOpen] = useState(true)
 
   return (
@@ -30,7 +33,7 @@ export default function SolvePage({ params }: { params: { id: string } }) {
             <div className="h-6 w-6 rounded bg-primary/10 flex items-center justify-center text-primary">
               <BrainCircuit className="h-4 w-4" />
             </div>
-            <span className="font-semibold text-sm">Solving Problem {params.id}</span>
+            <span className="font-semibold text-sm">Solving Problem {id}</span>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -63,7 +66,7 @@ export default function SolvePage({ params }: { params: { id: string } }) {
         {/* Problem Area */}
         <div className="h-[30%] border-b border-border/40 bg-zinc-50/50 dark:bg-zinc-900/10 shrink-0 relative overflow-hidden flex flex-col">
           <div className="flex-1 overflow-hidden relative z-10">
-            <ProblemHeader />
+            <ProblemHeader problemId={id} />
           </div>
         </div>
 

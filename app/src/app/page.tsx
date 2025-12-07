@@ -2,10 +2,12 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { UploadCloud, History, Settings, ArrowRight, BrainCircuit, Check, Loader2 } from "lucide-react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useRef, useState } from "react"
 
 export default function Home() {
+  const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadSuccess, setUploadSuccess] = useState(false)
@@ -18,10 +20,10 @@ export default function Home() {
       setIsUploading(false)
       setUploadSuccess(true)
 
-      // Reset after 3 seconds
+      // Navigate to solve page after short delay to show success state
       setTimeout(() => {
-        setUploadSuccess(false)
-      }, 3000)
+        router.push("/solve/1")
+      }, 500)
     }
   }
 
@@ -38,7 +40,12 @@ export default function Home() {
           </div>
           <h1 className="text-lg font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">SolveWithMe</h1>
         </div>
-        <Button variant="ghost" size="icon" className="text-muted-foreground hover:bg-secondary hover:text-foreground rounded-full transition-all duration-300">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-muted-foreground hover:bg-secondary hover:text-foreground rounded-full transition-all duration-300"
+          onClick={() => alert("Settings would open here")}
+        >
           <Settings className="h-5 w-5" />
         </Button>
       </header>
@@ -103,9 +110,11 @@ export default function Home() {
               <h3 className="text-sm font-semibold flex items-center gap-2 text-muted-foreground uppercase tracking-widest">
                 <History className="h-3.5 w-3.5" /> Recent Activity
               </h3>
-              <Button variant="link" size="sm" className="h-auto p-0 text-primary hover:underline underline-offset-4">
-                View all
-              </Button>
+              <Link href="/solve/1">
+                <Button variant="link" size="sm" className="h-auto p-0 text-primary hover:underline underline-offset-4">
+                  View all
+                </Button>
+              </Link>
             </div>
 
             <div className="grid gap-4">

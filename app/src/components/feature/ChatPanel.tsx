@@ -1,10 +1,39 @@
 "use client"
 import { motion, AnimatePresence } from "framer-motion"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { X, Bot, Sparkles } from "lucide-react"
 import { LatexRenderer } from "@/components/ui/LatexRenderer"
 
 export function ChatPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const [messages, setMessages] = useState<{ role: 'ai' | 'user'; content: string }[]>([
+    {
+      role: 'ai',
+      content: "Hello! I see you're working on a divisibility problem. Start by writing out the expression for $n = 1, 2, 3$ to see if you spot a pattern."
+    }
+  ])
+  const [input, setInput] = useState('')
+  const [isTyping, setIsTyping] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!input.trim()) return
+
+    const userMessage = input
+    setMessages(prev => [...prev, { role: 'user', content: userMessage }])
+    setInput('')
+    setIsTyping(true)
+
+    // Simulate AI response
+    setTimeout(() => {
+      setMessages(prev => [...prev, {
+        role: 'ai',
+        content: "That's a good observation. If $n=1$, we get $1+2+1=4$. Not divisible by 7. What about $n=2$?"
+      }])
+      setIsTyping(false)
+    }, 1500)
+  }
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -24,7 +53,7 @@ export function ChatPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
                 <h3 className="font-bold text-sm">AI Tutor</h3>
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                   <Sparkles className="h-3 w-3 text-amber-500" />
-                  Online
+                  {isTyping ? "Typing..." : "Online"}
                 </p>
               </div>
             </div>
@@ -34,37 +63,49 @@ export function ChatPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-6">
-            {/* Tutor Message */}
-            <div className="flex gap-4">
-              <div className="h-8 w-8 shrink-0 bg-primary text-primary-foreground rounded-lg flex items-center justify-center shadow-lg shadow-primary/20">
-                <Bot className="h-4 w-4" />
-              </div>
-              <div className="flex flex-col gap-1 items-start">
-                <div className="bg-muted p-4 rounded-2xl rounded-tl-none text-sm leading-relaxed shadow-sm">
-                  <LatexRenderer>
-                    Hello! I see you're working on a divisibility problem. Start by writing out the expression for $n = 1, 2, 3$ to see if you spot a pattern.
-                  </LatexRenderer>
+            {messages.map((msg, i) => (
+              <div key={i} className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                <div className={`h-8 w-8 shrink-0 rounded-lg flex items-center justify-center shadow-lg ${msg.role === 'ai'
+                  ? 'bg-primary text-primary-foreground shadow-primary/20'
+                  : 'bg-zinc-200 dark:bg-zinc-800 text-foreground'
+                  }`}>
+                  {msg.role === 'ai' ? <Bot className="h-4 w-4" /> : <div className="h-4 w-4 font-bold text-xs">Me</div>}
                 </div>
-                <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground ml-1">Just now</span>
+                <div className="flex flex-col gap-1 items-start max-w-[80%]">
+                  <div className={`p-4 rounded-2xl text-sm leading-relaxed shadow-sm ${msg.role === 'ai'
+                    ? 'bg-muted rounded-tl-none'
+                    : 'bg-primary/10 text-foreground rounded-tr-none'
+                    }`}>
+                    <LatexRenderer>
+                      {msg.content}
+                    </LatexRenderer>
+                  </div>
+                </div>
               </div>
-            </div>
-
-            {/* User Message Mock */}
-            {/* 
-                         <div className="flex gap-4 flex-row-reverse">
-                             <div className="h-8 w-8 shrink-0 bg-zinc-200 dark:bg-zinc-800 rounded-lg flex items-center justify-center">
-                                 <User className="h-4 w-4" />
-                             </div>
-                            ...
-                         </div> 
-                         */}
+            ))}
+            {isTyping && (
+              <div className="flex gap-4">
+                <div className="h-8 w-8 shrink-0 bg-primary text-primary-foreground rounded-lg flex items-center justify-center shadow-lg shadow-primary/20">
+                  <Bot className="h-4 w-4" />
+                </div>
+                <div className="bg-muted px-4 py-3 rounded-2xl rounded-tl-none">
+                  <div className="flex gap-1">
+                    <span className="w-1.5 h-1.5 bg-foreground/40 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                    <span className="w-1.5 h-1.5 bg-foreground/40 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                    <span className="w-1.5 h-1.5 bg-foreground/40 rounded-full animate-bounce"></span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="p-4 border-t border-border/40 bg-zinc-50/50 dark:bg-zinc-900/50">
-            <form className="relative flex items-center" onSubmit={(e) => e.preventDefault()}>
+            <form className="relative flex items-center" onSubmit={handleSubmit}>
               <input
                 className="w-full bg-background border border-input rounded-full px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
                 placeholder="Ask for a hint..."
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
               />
             </form>
           </div>

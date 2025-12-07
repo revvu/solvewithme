@@ -2,6 +2,7 @@
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { X, Bot, Sparkles } from "lucide-react"
+import { LatexRenderer } from "@/components/ui/LatexRenderer"
 
 export function ChatPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   return (
@@ -40,7 +41,9 @@ export function ChatPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
               </div>
               <div className="flex flex-col gap-1 items-start">
                 <div className="bg-muted p-4 rounded-2xl rounded-tl-none text-sm leading-relaxed shadow-sm">
-                  Hello! I see you're working on a divisibility problem. Start by writing out the expression for $n = 1, 2, 3$ to see if you spot a pattern.
+                  <LatexRenderer>
+                    Hello! I see you're working on a divisibility problem. Start by writing out the expression for $n = 1, 2, 3$ to see if you spot a pattern.
+                  </LatexRenderer>
                 </div>
                 <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground ml-1">Just now</span>
               </div>

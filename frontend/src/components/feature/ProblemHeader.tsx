@@ -1,5 +1,6 @@
 "use client"
 import { Badge } from "@/components/ui/badge"
+import { LatexRenderer } from "@/components/ui/LatexRenderer"
 
 export function ProblemHeader({ problemId = "1" }: { problemId?: string }) {
 
@@ -7,22 +8,12 @@ export function ProblemHeader({ problemId = "1" }: { problemId?: string }) {
     "1": {
       title: "PROBLEM 1",
       category: "Number Theory",
-      content: (
-        <p className="text-lg leading-relaxed font-serif">
-          Let $S$ be the set of integers $n$ such that $n^2 + 2n + 1$ is divisible by 7.
-          <br />
-          Find the number of elements in $S$ where $1 \le n \le 100$.
-        </p>
-      )
+      content: "Let $S$ be the set of integers $n$ such that $n^2 + 2n + 1$ is divisible by 7. <br /> Find the number of elements in $S$ where $1 \\le n \\le 100$."
     },
     "2": {
       title: "PROBLEM 2",
       category: "Calculus",
-      content: (
-        <p className="text-lg leading-relaxed font-serif">
-          Evaluate the integral $\int x^2 e^x dx$.
-        </p>
-      )
+      content: "Evaluate the integral $\\int x^2 e^x dx$."
     }
   }
 
@@ -38,7 +29,7 @@ export function ProblemHeader({ problemId = "1" }: { problemId?: string }) {
 
       <div className="prose prose-zinc dark:prose-invert max-w-none">
         <div className="p-6 bg-white dark:bg-zinc-800/50 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-700/50">
-          {data.content}
+          <LatexRenderer>{data.content as string}</LatexRenderer>
         </div>
       </div>
     </div>

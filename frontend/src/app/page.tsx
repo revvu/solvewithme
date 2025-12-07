@@ -1,9 +1,33 @@
+"use client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { UploadCloud, History, Settings, ArrowRight, BrainCircuit } from "lucide-react"
+import { UploadCloud, History, Settings, ArrowRight, BrainCircuit, Check, Loader2 } from "lucide-react"
 import Link from "next/link"
+import { useRef, useState } from "react"
 
 export default function Home() {
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadSuccess, setUploadSuccess] = useState(false)
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setIsUploading(true)
+      // Simulate upload delay
+      await new Promise(resolve => setTimeout(resolve, 1500))
+      setIsUploading(false)
+      setUploadSuccess(true)
+
+      // Reset after 3 seconds
+      setTimeout(() => {
+        setUploadSuccess(false)
+      }, 3000)
+    }
+  }
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click()
+  }
   return (
     <div className="flex min-h-screen flex-col bg-background font-sans text-foreground selection:bg-primary/10">
       {/* Header */}
@@ -41,8 +65,33 @@ export default function Home() {
                 <p className="mt-3 text-muted-foreground max-w-xs text-sm leading-relaxed">
                   Drop a screenshot or take a photo. <br /> AI will guide you to the solution.
                 </p>
-                <Button size="lg" className="mt-8 px-8 font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all active:scale-95">
-                  Choose Image
+                <div className="hidden">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileSelect}
+                    accept="image/*"
+                  />
+                </div>
+                <Button
+                  size="lg"
+                  className="mt-8 px-8 font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all active:scale-95 disabled:opacity-80"
+                  onClick={handleUploadClick}
+                  disabled={isUploading || uploadSuccess}
+                >
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : uploadSuccess ? (
+                    <>
+                      <Check className="mr-2 h-4 w-4" />
+                      Uploaded!
+                    </>
+                  ) : (
+                    "Choose Image"
+                  )}
                 </Button>
               </CardContent>
             </Card>

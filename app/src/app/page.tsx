@@ -1,187 +1,265 @@
 "use client"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { UploadCloud, History, Settings, ArrowRight, BrainCircuit, Check, Loader2 } from "lucide-react"
+import { UploadCloud, History, Settings, ArrowRight, BrainCircuit, Check, Loader2, Sparkles, Image as ImageIcon, Send } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useRef, useState, useEffect } from "react"
+import { cn } from "@/lib/utils"
 
 export default function Home() {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadSuccess, setUploadSuccess] = useState(false)
+  const [inputText, setInputText] = useState("")
+  const [pastedImage, setPastedImage] = useState<File | null>(null)
+  const [isHovering, setIsHovering] = useState(false)
 
+  // Auto-focus textarea on load
   useEffect(() => {
-    const handlePaste = (e: ClipboardEvent) => {
-      if (e.clipboardData?.items) {
-        const items = Array.from(e.clipboardData.items)
-        const imageItem = items.find(item => item.type.startsWith('image/'))
+    textareaRef.current?.focus()
+  }, [])
 
-        if (imageItem) {
-          e.preventDefault()
-          const file = imageItem.getAsFile()
-          if (file) {
-            // Re-use logic for file handling
-            setIsUploading(true)
-            // Function to simulate upload delay
-            const simulateUpload = async () => {
-              await new Promise(resolve => setTimeout(resolve, 1500))
-              setIsUploading(false)
-              setUploadSuccess(true)
-              setTimeout(() => {
-                router.push("/solve/1")
-              }, 500)
-            }
-            simulateUpload()
-          }
+  const handlePaste = (e: React.ClipboardEvent) => {
+    if (e.clipboardData?.items) {
+      const items = Array.from(e.clipboardData.items)
+      const imageItem = items.find(item => item.type.startsWith('image/'))
+
+      if (imageItem) {
+        e.preventDefault()
+        const file = imageItem.getAsFile()
+        if (file) {
+          setPastedImage(file)
         }
       }
     }
+  }
 
-    window.addEventListener('paste', handlePaste)
-    return () => window.removeEventListener('paste', handlePaste)
-  }, [router])
+  const handleUploadProcess = async () => {
+    if (!inputText.trim() && !pastedImage) return
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    setIsUploading(true)
+    // Simulate upload delay
+    await new Promise(resolve => setTimeout(resolve, 1500))
+    setIsUploading(false)
+    setUploadSuccess(true)
+
+    // Navigate to solve page after short delay to show success state
+    setTimeout(() => {
+      router.push("/solve/1")
+    }, 500)
+  }
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setIsUploading(true)
-      // Simulate upload delay
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      setIsUploading(false)
-      setUploadSuccess(true)
-
-      // Navigate to solve page after short delay to show success state
-      setTimeout(() => {
-        router.push("/solve/1")
-      }, 500)
+      setPastedImage(e.target.files[0])
     }
   }
 
   const handleUploadClick = () => {
     fileInputRef.current?.click()
   }
+
   return (
-    <div className="flex min-h-screen flex-col bg-background font-sans text-foreground selection:bg-primary/10">
+    <div className="min-h-screen bg-background font-sans text-foreground selection:bg-primary/30 overflow-x-hidden relative">
+
+      {/* Dynamic Background Elements */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-primary/20 blur-[120px] opacity-40 animate-pulse" style={{ animationDuration: '8s' }} />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] rounded-full bg-indigo-600/10 blur-[150px] opacity-30" />
+      </div>
+
       {/* Header */}
-      <header className="sticky top-0 z-50 flex h-16 items-center justify-between border-b border-border/40 bg-background/80 px-6 backdrop-blur-xl">
-        <div className="flex items-center gap-2 transition-transform hover:scale-105 active:scale-95 duration-200">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/20">
-            <BrainCircuit className="h-5 w-5" />
+      <header className="sticky top-0 z-50 flex h-20 items-center justify-between border-b border-white/5 bg-background/60 px-6 sm:px-10 backdrop-blur-xl">
+        <div className="flex items-center gap-3 group cursor-pointer">
+          <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-indigo-600 text-white shadow-lg shadow-primary/20 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3">
+            <BrainCircuit className="h-6 w-6" />
+            <div className="absolute inset-0 rounded-xl bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
-          <h1 className="text-lg font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">SolveWithMe</h1>
+          <h1 className="text-xl font-bold tracking-tight text-foreground transition-all group-hover:text-primary">
+            SolveWithMe
+          </h1>
         </div>
         <Button
           variant="ghost"
           size="icon"
-          className="text-muted-foreground hover:bg-secondary hover:text-foreground rounded-full transition-all duration-300"
+          className="text-muted-foreground hover:bg-white/10 hover:text-foreground rounded-full transition-all duration-300"
           onClick={() => alert("Settings would open here")}
         >
           <Settings className="h-5 w-5" />
         </Button>
       </header>
 
-      <main className="flex flex-1 flex-col items-center justify-center p-6 sm:p-12 relative overflow-hidden">
-        {/* Background Gradients */}
-        <div className="absolute top-0 left-0 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-primary/5 blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 right-0 translate-x-1/3 translate-y-1/3 w-[600px] h-[600px] rounded-full bg-violet-500/5 blur-3xl pointer-events-none" />
+      <main className="relative z-10 flex flex-col items-center justify-center px-4 py-16 sm:px-12 min-h-[calc(100vh-80px)]">
 
-        <div className="mx-auto flex w-full max-w-xl flex-col gap-12 relative z-10">
+        <div className="w-full max-w-4xl flex flex-col gap-12 animate-in fade-in slide-in-from-bottom-8 duration-700">
 
-          {/* Hero / Upload */}
-          <div className="flex flex-col gap-6 items-center text-center">
-            <h2 className="text-4xl font-extrabold tracking-tight sm:text-5xl bg-clip-text text-transparent bg-gradient-to-b from-foreground to-foreground/60 pb-2">
-              Ready to learn?
+          {/* Hero Section */}
+          <div className="text-center space-y-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold tracking-wide uppercase border border-primary/20 mb-2">
+              <Sparkles className="w-3 h-3" /> AI-Powered Math Tutoring
+            </div>
+            <h2 className="text-5xl sm:text-7xl font-extrabold tracking-tight text-foreground">
+              Master Math, <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-indigo-500 to-violet-500">
+                Not Just Answers.
+              </span>
             </h2>
-            <Card className="w-full group relative overflow-hidden border border-border/50 bg-card/50 backdrop-blur-sm transition-all hover:border-primary/20 hover:shadow-2xl hover:shadow-primary/5">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <CardContent className="flex flex-col items-center justify-center py-16 text-center relative z-10">
-                <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-secondary text-primary transition-all duration-300 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground shadow-lg">
-                  <UploadCloud className="h-10 w-10" />
-                </div>
-                <h3 className="text-2xl font-semibold tracking-tight">Upload a Problem</h3>
-                <p className="mt-3 text-muted-foreground max-w-xs text-sm leading-relaxed">
-                  Drop a screenshot, <span className="text-primary font-medium">paste (Ctrl+V)</span>, or take a photo. <br /> AI will guide you to the solution.
-                </p>
-                <div className="hidden">
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileSelect}
-                    accept="image/*"
-                  />
-                </div>
-                <Button
-                  size="lg"
-                  className="mt-8 px-8 font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all active:scale-95 disabled:opacity-80"
-                  onClick={handleUploadClick}
-                  disabled={isUploading || uploadSuccess}
-                >
-                  {isUploading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Uploading...
-                    </>
-                  ) : uploadSuccess ? (
-                    <>
-                      <Check className="mr-2 h-4 w-4" />
-                      Uploaded!
-                    </>
-                  ) : (
-                    "Choose Image"
-                  )}
-                </Button>
-              </CardContent>
-            </Card>
+            <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+              Type your question, paste an image, or upload a screenshot. <br />
+              Your personal AI tutor is ready to help you find the "Aha!" moment.
+            </p>
           </div>
 
-          {/* Recent */}
-          <div className="flex flex-col gap-5">
-            <div className="flex items-center justify-between px-1">
-              <h3 className="text-sm font-semibold flex items-center gap-2 text-muted-foreground uppercase tracking-widest">
-                <History className="h-3.5 w-3.5" /> Recent Activity
+          {/* Hybrid Input Area */}
+          <div
+            className="w-full max-w-2xl mx-auto relative group"
+            onMouseEnter={() => setIsHovering(true)}
+            onMouseLeave={() => setIsHovering(false)}
+          >
+            <div className={cn(
+              "absolute -inset-1 rounded-[2rem] bg-gradient-to-r from-primary via-indigo-500 to-violet-500 opacity-20 blur-xl transition-opacity duration-500 group-hover:opacity-40",
+              (inputText || pastedImage) ? "opacity-40" : ""
+            )} />
+
+            <div className="relative glass-panel rounded-[1.5rem] p-2 transition-all duration-300 shadow-2xl">
+              <div className="rounded-[1.25rem] bg-card/60 backdrop-blur-xl border border-white/5 overflow-hidden flex flex-col">
+
+                {/* Textarea */}
+                <textarea
+                  ref={textareaRef}
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  onPaste={handlePaste}
+                  placeholder="Type a math problem or paste an image (Ctrl+V)..."
+                  className="w-full min-h-[120px] bg-transparent border-0 p-6 text-lg placeholder:text-muted-foreground/50 resize-none focus:outline-none focus:ring-0"
+                />
+
+                {/* Attachment Preview */}
+                {pastedImage && (
+                  <div className="px-6 pb-4 animate-in fade-in zoom-in-95 duration-200">
+                    <div className="relative inline-block group/image">
+                      <div className="h-20 w-20 rounded-lg overflow-hidden border border-white/10 shadow-md">
+                        <img src={URL.createObjectURL(pastedImage)} alt="Pasted" className="h-full w-full object-cover" />
+                      </div>
+                      <Button
+                        size="icon"
+                        variant="destructive"
+                        className="absolute -top-2 -right-2 h-6 w-6 rounded-full shadow-lg opacity-0 group-hover/image:opacity-100 transition-opacity"
+                        onClick={() => setPastedImage(null)}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Toolbar */}
+                <div className="flex items-center justify-between px-4 py-3 bg-muted/20 border-t border-white/5">
+                  <div className="flex gap-2">
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileSelect}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-muted-foreground hover:text-foreground hover:bg-white/10 gap-2 h-9 px-3 rounded-full"
+                      onClick={handleUploadClick}
+                    >
+                      <ImageIcon className="h-4 w-4" />
+                      <span className="hidden sm:inline">Add Image</span>
+                    </Button>
+                  </div>
+
+                  <Button
+                    onClick={handleUploadProcess}
+                    disabled={(!inputText.trim() && !pastedImage) || isUploading || uploadSuccess}
+                    className={cn(
+                      "h-10 px-6 rounded-full font-semibold transition-all duration-300 shadow-lg shadow-primary/20",
+                      (inputText.trim() || pastedImage) ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-muted text-muted-foreground hover:bg-muted"
+                    )}
+                  >
+                    {isUploading ? (
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Analyzing...</span>
+                      </div>
+                    ) : uploadSuccess ? (
+                      <div className="flex items-center gap-2">
+                        <Check className="h-4 w-4" />
+                        <span>Ready!</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span>Solve</span>
+                        <ArrowRight className="h-4 w-4" />
+                      </div>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Recent Activity */}
+          <div className="max-w-2xl mx-auto w-full space-y-6 pt-8">
+            <div className="flex items-center justify-between px-2">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                <History className="h-4 w-4" /> Continue Learning
               </h3>
-              <Link href="/solve/1">
-                <Button variant="link" size="sm" className="h-auto p-0 text-primary hover:underline underline-offset-4">
-                  View all
-                </Button>
+              <Link href="/solve/1" className="text-sm text-primary hover:text-primary/80 transition-colors font-medium hover:underline underline-offset-4">
+                View All
               </Link>
             </div>
 
             <div className="grid gap-4">
+              {/* Recent Item 1 */}
               <Link href="/solve/1">
-                <Card className="group cursor-pointer border border-border/50 bg-card/50 hover:bg-card hover:border-violet-500/20 transition-all duration-300 hover:shadow-lg hover:shadow-violet-500/5">
-                  <CardContent className="flex items-center gap-5 p-5">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-100/50 text-violet-600 dark:bg-violet-900/20 dark:text-violet-400 group-hover:scale-105 transition-transform duration-300">
-                      <span className="font-bold text-xs ring-1 ring-inset ring-violet-500/20 px-1 rounded">AIME</span>
-                    </div>
-                    <div className="flex-1 overflow-hidden">
-                      <p className="truncate font-semibold text-foreground group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">Problem 1 (Number Theory)</p>
-                      <p className="text-xs text-muted-foreground mt-1">Modified 2 hours ago</p>
-                    </div>
-                    <ArrowRight className="h-5 w-5 text-muted-foreground opacity-0 -translate-x-4 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0 group-hover:text-violet-500" />
-                  </CardContent>
-                </Card>
+                <div className="group relative overflow-hidden rounded-2xl bg-card/30 border border-white/5 hover:bg-card/50 transition-all duration-300 hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5 p-5 flex items-center gap-5">
+                  <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-violet-500/20 to-indigo-500/20 flex items-center justify-center text-sm font-bold text-primary ring-1 ring-inset ring-white/10 group-hover:scale-105 transition-transform">
+                    AIME
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">Problem 1 (Number Theory)</h4>
+                    <p className="text-xs text-muted-foreground mt-1">Last active: 2 hours ago</p>
+                  </div>
+                  <div className="h-8 w-8 rounded-full border border-white/10 flex items-center justify-center opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
+                    <ArrowRight className="h-4 w-4 text-primary" />
+                  </div>
+                </div>
               </Link>
 
+              {/* Recent Item 2 */}
               <Link href="/solve/2">
-                <Card className="group cursor-pointer border border-border/50 bg-card/50 hover:bg-card hover:border-orange-500/20 transition-all duration-300 hover:shadow-lg hover:shadow-orange-500/5">
-                  <CardContent className="flex items-center gap-5 p-5">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-orange-100/50 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400 group-hover:scale-105 transition-transform duration-300">
-                      <span className="font-bold text-xs ring-1 ring-inset ring-orange-500/20 px-1 rounded">CALC</span>
-                    </div>
-                    <div className="flex-1 overflow-hidden">
-                      <p className="truncate font-semibold text-foreground group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">Problem 2 (Calculus)</p>
-                      <p className="text-xs text-muted-foreground mt-1">Modified yesterday</p>
-                    </div>
-                    <ArrowRight className="h-5 w-5 text-muted-foreground opacity-0 -translate-x-4 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0 group-hover:text-orange-500" />
-                  </CardContent>
-                </Card>
+                <div className="group relative overflow-hidden rounded-2xl bg-card/30 border border-white/5 hover:bg-card/50 transition-all duration-300 hover:border-orange-500/20 hover:shadow-lg hover:shadow-orange-500/5 p-5 flex items-center gap-5">
+                  <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-orange-500/20 to-amber-500/20 flex items-center justify-center text-sm font-bold text-orange-500 ring-1 ring-inset ring-white/10 group-hover:scale-105 transition-transform">
+                    CALC
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-semibold text-foreground truncate group-hover:text-orange-500 transition-colors">Problem 2 (Calculus)</h4>
+                    <p className="text-xs text-muted-foreground mt-1">Last active: Yesterday</p>
+                  </div>
+                  <div className="h-8 w-8 rounded-full border border-white/10 flex items-center justify-center opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
+                    <ArrowRight className="h-4 w-4 text-orange-500" />
+                  </div>
+                </div>
               </Link>
             </div>
           </div>
+
         </div>
       </main>
     </div>
   )
 }
+
+function isDragging(hovering: boolean) {
+  // Simple visual logic helper for now, could be expanded to actual drag state
+  return hovering;
+}
+

@@ -36,19 +36,62 @@ export default function Home() {
     }
   }
 
+  const [uploadError, setUploadError] = useState<string | null>(null)
+
+  // Convert file to base64 data URL
+  const fileToDataURL = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onloadend = () => resolve(reader.result as string)
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
+  }
+
   const handleUploadProcess = async () => {
     if (!inputText.trim() && !pastedImage) return
 
     setIsUploading(true)
-    // Simulate upload delay
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    setIsUploading(false)
-    setUploadSuccess(true)
+    setUploadError(null)
 
-    // Navigate to solve page after short delay to show success state
-    setTimeout(() => {
-      router.push("/solve/1")
-    }, 500)
+    try {
+      let imageUrl: string | null = null
+      let text: string | null = inputText.trim() || null
+
+      // Convert image to base64 data URL if present
+      if (pastedImage) {
+        imageUrl = await fileToDataURL(pastedImage)
+      }
+
+      // Call the ingest API
+      const response = await fetch('/api/ingest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageUrl,
+          text: imageUrl ? null : text, // Only send text if no image
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to process problem')
+      }
+
+      const data = await response.json()
+
+      setIsUploading(false)
+      setUploadSuccess(true)
+
+      // Navigate to solve page with the new problem ID
+      setTimeout(() => {
+        router.push(`/solve/${data.problemId}`)
+      }, 500)
+    } catch (error) {
+      console.error('Upload error:', error)
+      setIsUploading(false)
+      setUploadError(error instanceof Error ? error.message : 'Failed to process problem')
+    }
   }
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -152,6 +195,13 @@ export default function Home() {
                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
                       </Button>
                     </div>
+                  </div>
+                )}
+
+                {/* Error Display */}
+                {uploadError && (
+                  <div className="px-4 py-2 bg-red-500/10 border-t border-red-500/20 text-red-500 text-sm">
+                    {uploadError}
                   </div>
                 )}
 

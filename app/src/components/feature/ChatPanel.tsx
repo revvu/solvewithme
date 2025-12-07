@@ -6,14 +6,30 @@ import { X, Bot, Sparkles, Send, User } from "lucide-react"
 import { LatexRenderer } from "@/components/ui/LatexRenderer"
 import { cn } from "@/lib/utils"
 
-export function ChatPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-  const [messages, setMessages] = useState<{ role: 'ai' | 'user'; content: string; type?: 'insight' | 'subproblem' | 'normal' }[]>([
+export interface ChatMessage {
+  role: 'ai' | 'user'
+  content: string
+  type?: 'insight' | 'subproblem' | 'normal'
+}
+
+interface ChatPanelProps {
+  isOpen: boolean
+  onClose: () => void
+  messages?: ChatMessage[]
+  onSendMessage?: (message: string) => void
+}
+
+export function ChatPanel({ isOpen, onClose, messages: externalMessages, onSendMessage }: ChatPanelProps) {
+  // Use external messages if provided, otherwise use internal state
+  const [internalMessages, setInternalMessages] = useState<ChatMessage[]>([
     {
       role: 'ai',
       type: 'normal',
       content: "Hello! I see you're working on a divisibility problem. Start by writing out the expression for $n = 1, 2, 3$ to see if you spot a pattern."
     }
   ])
+
+  const messages = externalMessages ?? internalMessages
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -31,19 +47,26 @@ export function ChatPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
     if (!input.trim()) return
 
     const userMessage = input
-    setMessages(prev => [...prev, { role: 'user', content: userMessage }])
     setInput('')
-    setIsTyping(true)
 
-    // Simulate AI response
-    setTimeout(() => {
-      setMessages(prev => [...prev, {
-        role: 'ai',
-        type: 'insight',
-        content: "That's a good observation. If $n=1$, we get $1+2+1=4$. Not divisible by 7. What about $n=2$?"
-      }])
-      setIsTyping(false)
-    }, 1500)
+    if (onSendMessage) {
+      // Use external handler
+      onSendMessage(userMessage)
+    } else {
+      // Use internal state (fallback)
+      setInternalMessages(prev => [...prev, { role: 'user', content: userMessage }])
+      setIsTyping(true)
+
+      // Simulate AI response
+      setTimeout(() => {
+        setInternalMessages(prev => [...prev, {
+          role: 'ai',
+          type: 'insight',
+          content: "That's a good observation. If $n=1$, we get $1+2+1=4$. Not divisible by 7. What about $n=2$?"
+        }])
+        setIsTyping(false)
+      }, 1500)
+    }
   }
 
   return (
@@ -102,17 +125,19 @@ export function ChatPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
                     "p-4 rounded-2xl text-sm leading-relaxed shadow-sm relative overflow-hidden",
                     msg.role === 'ai'
                       ? "bg-muted/50 text-foreground rounded-tl-none border border-border/50"
-                      : "bg-primary text-primary-foreground rounded-tr-none shadow-primary/20"
+                      : "bg-primary text-primary-foreground rounded-tr-none shadow-primary/20",
+                    msg.type === 'insight' && msg.role === 'ai' && "border-l-4 border-l-amber-400",
+                    msg.type === 'subproblem' && msg.role === 'ai' && "border-l-4 border-l-violet-400"
                   )}>
-                    {msg.type === 'insight' && (
-                      <div className="absolute top-0 left-0 w-1 h-full bg-amber-400" />
-                    )}
                     <LatexRenderer>
                       {msg.content}
                     </LatexRenderer>
                   </div>
                   {msg.type === 'insight' && msg.role === 'ai' && (
                     <span className="text-[10px] uppercase font-bold text-amber-500 tracking-wider px-1">Key Insight</span>
+                  )}
+                  {msg.type === 'subproblem' && msg.role === 'ai' && (
+                    <span className="text-[10px] uppercase font-bold text-violet-500 tracking-wider px-1">New Subproblem</span>
                   )}
                 </div>
               </div>

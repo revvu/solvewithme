@@ -1,5 +1,5 @@
 "use client"
-import { useState, useCallback, useRef } from "react"
+import { useState, useCallback, useRef, useEffect } from "react"
 import Link from "next/link"
 import dynamic from "next/dynamic"
 import { useParams } from "next/navigation"
@@ -15,6 +15,17 @@ const CanvasBoard = dynamic(
   { ssr: false, loading: () => <div className="w-full h-full bg-zinc-50 dark:bg-zinc-900 animate-pulse" /> }
 )
 
+// Problem data from API
+interface ProblemData {
+  id: string
+  text: string
+  category: string
+  title: string
+  imageUrl: string | null
+  isSubproblem: boolean
+  targetInsight?: string
+}
+
 // Problem stack item for navigation
 interface ProblemStackItem {
   id: string
@@ -25,6 +36,11 @@ interface ProblemStackItem {
 export default function SolvePage() {
   const params = useParams()
   const id = Array.isArray(params.id) ? params.id[0] : params.id
+
+  // Problem data state
+  const [problemData, setProblemData] = useState<ProblemData | null>(null)
+  const [isLoadingProblem, setIsLoadingProblem] = useState(true)
+  const [problemError, setProblemError] = useState<string | null>(null)
 
   // Chat state
   const [isChatOpen, setIsChatOpen] = useState(true)
@@ -51,6 +67,39 @@ export default function SolvePage() {
 
   // Canvas ref for getting user work
   const canvasRef = useRef<{ getDataURL: () => string } | null>(null)
+
+  // Fetch problem data when current problem changes
+  useEffect(() => {
+    async function fetchProblem() {
+      setIsLoadingProblem(true)
+      setProblemError(null)
+
+      try {
+        const response = await fetch(`/api/problem/${currentProblem.id}`)
+        if (!response.ok) {
+          throw new Error('Problem not found')
+        }
+        const data = await response.json()
+        setProblemData(data)
+
+        // Update problem stack title with actual title
+        if (data.title && problemStack.length === 1) {
+          setProblemStack([{
+            id: currentProblem.id,
+            title: data.title,
+            isSubproblem: data.isSubproblem
+          }])
+        }
+      } catch (error) {
+        console.error('Failed to fetch problem:', error)
+        setProblemError('Failed to load problem. It may not exist in the database.')
+      } finally {
+        setIsLoadingProblem(false)
+      }
+    }
+
+    fetchProblem()
+  }, [currentProblem.id])
 
   // Add a message to chat
   const addMessage = useCallback((message: ChatMessage) => {
@@ -386,7 +435,13 @@ export default function SolvePage() {
         <div className="h-[30%] min-h-[200px] border-b border-border/40 bg-muted/30 shrink-0 relative overflow-hidden flex flex-col shadow-inner z-10">
           <div className="absolute inset-0 bg-grid-zinc-200/50 dark:bg-grid-zinc-800/20 [mask-image:linear-gradient(to_bottom,white,transparent)] pointer-events-none" />
           <div className="flex-1 overflow-hidden relative z-10">
-            <ProblemHeader problemId={currentProblem.id} problemStack={problemStack} />
+            <ProblemHeader
+              problemId={currentProblem.id}
+              problemStack={problemStack}
+              problemData={problemData}
+              isLoading={isLoadingProblem}
+              error={problemError}
+            />
           </div>
         </div>
 

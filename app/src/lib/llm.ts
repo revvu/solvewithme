@@ -26,14 +26,89 @@ export interface LLMResponse {
 }
 
 export const llmService = {
-  async solveProblem(imageUrl: string): Promise<LLMResponse> {
+  /**
+   * Extract problem text from an image using vision capabilities
+   */
+  async extractProblemText(imageUrl: string): Promise<LLMResponse> {
     try {
       const response = await getOpenAI().chat.completions.create({
         model: getModel(),
         messages: [
           {
             role: 'system',
-            content: `You are an expert math and science tutor. When given a problem image, you must:
+            content: `You are an expert at reading and transcribing math and science problems from images.
+
+Your task is to:
+1. Carefully read the problem from the image
+2. Transcribe it accurately, preserving all mathematical notation
+3. Use LaTeX notation for all math expressions (e.g., $x^2$, $\\frac{a}{b}$, $\\int$)
+4. Identify the subject/category of the problem
+
+Respond in JSON format:
+{
+  "problem_text": "The full problem statement with LaTeX math notation. Use <br /> for line breaks if the problem has multiple parts or lines.",
+  "category": "The subject category (e.g., 'Number Theory', 'Calculus', 'Algebra', 'Geometry', 'Physics', etc.)",
+  "title": "A short descriptive title for the problem (e.g., 'Divisibility Problem', 'Integration by Parts')"
+}`
+          },
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'image_url',
+                image_url: { url: imageUrl }
+              },
+              {
+                type: 'text',
+                text: 'Please read and transcribe this problem exactly as shown. Use LaTeX for all mathematical expressions.'
+              }
+            ]
+          }
+        ],
+        response_format: { type: 'json_object' },
+        max_tokens: 2048,
+      });
+
+      const content = response.choices[0]?.message?.content;
+      if (!content) {
+        return { success: false, error: 'No response from LLM' };
+      }
+
+      const parsed = JSON.parse(content);
+      return { success: true, data: parsed };
+    } catch (error) {
+      console.error('[LLM] extractProblemText error:', error);
+      return { success: false, error: String(error) };
+    }
+  },
+
+  /**
+   * Solve a problem given its text (and optionally image)
+   */
+  async solveProblem(problemText: string, imageUrl?: string): Promise<LLMResponse> {
+    try {
+      const userContent: OpenAI.Chat.ChatCompletionContentPart[] = [];
+
+      // Add image if provided
+      if (imageUrl) {
+        userContent.push({
+          type: 'image_url',
+          image_url: { url: imageUrl }
+        });
+      }
+
+      // Add text prompt
+      userContent.push({
+        type: 'text',
+        text: `Please solve this problem completely. Show all steps.\n\nProblem:\n${problemText}`
+      });
+
+      const response = await getOpenAI().chat.completions.create({
+        model: getModel(),
+        messages: [
+          {
+            role: 'system',
+            content: `You are an expert math and science tutor. When given a problem, you must:
 1. Carefully read and understand the problem
 2. Solve it step by step
 3. Provide the final answer
@@ -46,16 +121,7 @@ Respond in JSON format:
           },
           {
             role: 'user',
-            content: [
-              {
-                type: 'image_url',
-                image_url: { url: imageUrl }
-              },
-              {
-                type: 'text',
-                text: 'Please solve this problem completely. Show all steps.'
-              }
-            ]
+            content: userContent
           }
         ],
         response_format: { type: 'json_object' },
@@ -71,6 +137,42 @@ Respond in JSON format:
       return { success: true, data: parsed };
     } catch (error) {
       console.error('[LLM] solveProblem error:', error);
+      return { success: false, error: String(error) };
+    }
+  },
+
+  /**
+   * Combined: Extract text from image and solve the problem
+   */
+  async processImageProblem(imageUrl: string): Promise<LLMResponse> {
+    try {
+      // Step 1: Extract the problem text
+      const extractResult = await this.extractProblemText(imageUrl);
+      if (!extractResult.success || !extractResult.data) {
+        return { success: false, error: 'Failed to extract problem text from image' };
+      }
+
+      const { problem_text, category, title } = extractResult.data;
+
+      // Step 2: Solve the problem
+      const solveResult = await this.solveProblem(problem_text, imageUrl);
+      if (!solveResult.success || !solveResult.data) {
+        return { success: false, error: 'Failed to solve the problem' };
+      }
+
+      // Combine results
+      return {
+        success: true,
+        data: {
+          problem_text,
+          category,
+          title,
+          solution: solveResult.data.solution,
+          answer: solveResult.data.answer,
+        }
+      };
+    } catch (error) {
+      console.error('[LLM] processImageProblem error:', error);
       return { success: false, error: String(error) };
     }
   },

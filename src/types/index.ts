@@ -1,24 +1,12 @@
-export interface ProblemNode {
-  id: string;
-  parent_id: string | null;
-  content: {
-    text?: string;
-    image_url?: string;
-  };
-  hidden_solution: string;
-  hidden_answer?: string;
-  target_insight?: string;
-  generated_by: 'user_upload' | 'llm_subproblem';
-  status: 'active' | 'solved' | 'aborted';
-  created_at: string;
+// Re-export Prisma generated types
+export type { ProblemNode, Attempt, GeneratedBy, ProblemStatus } from '@/generated/prisma';
+
+// Content types for JSON fields
+export interface ProblemContent {
+  text?: string;
+  image_url?: string;
 }
 
-export interface Attempt {
-  id: string;
-  problem_node_id: string;
-  user_work: {
-    image_urls: string[];
-  };
-  user_text?: string;
-  timestamp: string;
+export interface UserWork {
+  image_urls: string[];
 }

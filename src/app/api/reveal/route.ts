@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(req: NextRequest) {
   try {
@@ -10,19 +10,21 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Problem ID is required' }, { status: 400 });
     }
 
-    const { data: problem, error } = await supabase
-      .from('problem_nodes')
-      .select('hidden_solution, hidden_answer')
-      .eq('id', problemId)
-      .single();
+    const problem = await prisma.problemNode.findUnique({
+      where: { id: problemId },
+      select: {
+        hiddenSolution: true,
+        hiddenAnswer: true,
+      },
+    });
 
-    if (error || !problem) {
+    if (!problem) {
       return NextResponse.json({ error: 'Problem not found' }, { status: 404 });
     }
 
     return NextResponse.json({
-      solution: problem.hidden_solution,
-      answer: problem.hidden_answer,
+      solution: problem.hiddenSolution,
+      answer: problem.hiddenAnswer,
     });
   } catch (error) {
     console.error('API error:', error);

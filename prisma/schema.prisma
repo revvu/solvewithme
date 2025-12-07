@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum GeneratedBy {
+  user_upload
+  llm_subproblem
+}
+
+enum ProblemStatus {
+  active
+  solved
+  aborted
+}
+
+model ProblemNode {
+  id              String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  parentId        String?        @map("parent_id") @db.Uuid
+  content         Json
+  hiddenSolution  String         @map("hidden_solution")
+  hiddenAnswer    String?        @map("hidden_answer")
+  targetInsight   String?        @map("target_insight")
+  generatedBy     GeneratedBy?   @map("generated_by")
+  status          ProblemStatus  @default(active)
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  parent          ProblemNode?   @relation("ProblemHierarchy", fields: [parentId], references: [id])
+  children        ProblemNode[]  @relation("ProblemHierarchy")
+  attempts        Attempt[]
+
+  @@map("problem_nodes")
+}
+
+model Attempt {
+  id            String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  problemNodeId String       @map("problem_node_id") @db.Uuid
+  userWork      Json?        @map("user_work")
+  userText      String?      @map("user_text")
+  timestamp     DateTime     @default(now()) @db.Timestamptz
+
+  // Relations
+  problemNode   ProblemNode  @relation(fields: [problemNodeId], references: [id])
+
+  @@map("attempts")
+}

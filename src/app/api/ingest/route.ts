@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { prisma } from '@/lib/prisma';
 import { llmService } from '@/lib/llm';
 
 export async function POST(req: NextRequest) {
@@ -16,23 +16,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to process problem with LLM' }, { status: 500 });
     }
 
-    // 2. Create ProblemNode in Supabase
-    const { data: problemNode, error: dbError } = await supabase
-      .from('problem_nodes')
-      .insert({
+    // 2. Create ProblemNode in database
+    const problemNode = await prisma.problemNode.create({
+      data: {
         content: { image_url: imageUrl },
-        hidden_solution: llmResult.data.solution,
-        hidden_answer: llmResult.data.answer,
-        generated_by: 'user_upload',
+        hiddenSolution: llmResult.data.solution,
+        hiddenAnswer: llmResult.data.answer,
+        generatedBy: 'user_upload',
         status: 'active',
-      })
-      .select()
-      .single();
-
-    if (dbError) {
-      console.error('Supabase error:', dbError);
-      return NextResponse.json({ error: 'Failed to save problem node' }, { status: 500 });
-    }
+      },
+    });
 
     return NextResponse.json({ problemId: problemNode.id });
   } catch (error) {

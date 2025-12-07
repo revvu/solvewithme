@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { prisma } from '@/lib/prisma';
 import { llmService } from '@/lib/llm';
 
 export async function POST(req: NextRequest) {
@@ -11,20 +11,18 @@ export async function POST(req: NextRequest) {
     }
 
     // 1. Fetch original problem
-    const { data: problemNode, error: fetchError } = await supabase
-      .from('problem_nodes')
-      .select('*')
-      .eq('id', problemId)
-      .single();
+    const problemNode = await prisma.problemNode.findUnique({
+      where: { id: problemId },
+    });
 
-    if (fetchError || !problemNode) {
+    if (!problemNode) {
       return NextResponse.json({ error: 'Problem not found' }, { status: 404 });
     }
 
     // 2. Call LLM to generate subproblem
     const llmResult = await llmService.generateSubproblem(
       problemNode.content,
-      problemNode.hidden_solution,
+      problemNode.hiddenSolution,
       { images: userWorkImages, text: userText }
     );
 
@@ -33,30 +31,25 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. Create Subproblem Node
-    const { data: subproblemNode, error: createError } = await supabase
-      .from('problem_nodes')
-      .insert({
-        parent_id: problemId,
+    const subproblemNode = await prisma.problemNode.create({
+      data: {
+        parentId: problemId,
         content: { text: llmResult.data.subproblem_text },
-        hidden_solution: llmResult.data.hidden_subproblem_solution, // In real app, LLM provides this
-        hidden_answer: '', // Optional depending on LLM output
-        target_insight: llmResult.data.missing_insight,
-        generated_by: 'llm_subproblem',
+        hiddenSolution: llmResult.data.hidden_subproblem_solution,
+        hiddenAnswer: '',
+        targetInsight: llmResult.data.missing_insight,
+        generatedBy: 'llm_subproblem',
         status: 'active',
-      })
-      .select()
-      .single();
-
-    if (createError) {
-      console.error('Supabase create error:', createError);
-      return NextResponse.json({ error: 'Failed to save subproblem' }, { status: 500 });
-    }
+      },
+    });
 
     // 4. Record Attempt
-    await supabase.from('attempts').insert({
-      problem_node_id: problemId,
-      user_work: { image_urls: userWorkImages || [] },
-      user_text: userText,
+    await prisma.attempt.create({
+      data: {
+        problemNodeId: problemId,
+        userWork: { image_urls: userWorkImages || [] },
+        userText: userText,
+      },
     });
 
     return NextResponse.json({

@@ -2,6 +2,7 @@
 import { Badge } from "@/components/ui/badge"
 import { LatexRenderer } from "@/components/ui/LatexRenderer"
 import { ChevronRight, Layers, Loader2, AlertCircle } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface ProblemStackItem {
   id: string
@@ -25,6 +26,7 @@ interface ProblemHeaderProps {
   problemData?: ProblemData | null
   isLoading?: boolean
   error?: string | null
+  onNavigate?: (index: number) => void
 }
 
 // Fallback problems for demo/testing when database is not available
@@ -46,7 +48,8 @@ export function ProblemHeader({
   problemStack,
   problemData,
   isLoading = false,
-  error = null
+  error = null,
+  onNavigate
 }: ProblemHeaderProps) {
 
   // Check if we're viewing a subproblem
@@ -59,30 +62,48 @@ export function ProblemHeader({
     content: problemData.text
   } : (fallbackProblems[problemId] || fallbackProblems["1"])
 
+  const handleBreadcrumbClick = (index: number) => {
+    if (onNavigate && problemStack && index < problemStack.length - 1) {
+      onNavigate(index)
+    }
+  }
+
   return (
     <div className="h-full w-full flex flex-col font-sans">
       {/* Breadcrumbs / Meta Bar */}
       <div className="flex items-center gap-2 px-6 py-3 border-b border-border/40 bg-background/50 backdrop-blur-sm text-xs font-medium text-muted-foreground overflow-x-auto">
         {problemStack && problemStack.length > 0 ? (
           // Render dynamic breadcrumbs based on problem stack
-          problemStack.map((item, index) => (
-            <div key={item.id} className="flex items-center gap-2 shrink-0">
-              {index > 0 && <ChevronRight className="h-3 w-3 opacity-50" />}
-              <div className={`flex items-center gap-1 ${index === problemStack.length - 1 ? 'text-foreground font-semibold' : 'hover:text-primary transition-colors cursor-pointer'}`}>
-                {index === 0 && <Layers className="h-3.5 w-3.5" />}
-                <span>{item.isSubproblem ? `Subproblem ${index}` : 'Original Problem'}</span>
+          problemStack.map((item, index) => {
+            const isLast = index === problemStack.length - 1
+            const isClickable = !isLast && onNavigate
+
+            return (
+              <div key={item.id} className="flex items-center gap-2 shrink-0">
+                {index > 0 && <ChevronRight className="h-3 w-3 opacity-50" />}
+                <button
+                  onClick={() => handleBreadcrumbClick(index)}
+                  disabled={isLast}
+                  className={cn(
+                    "flex items-center gap-1 transition-colors",
+                    isLast
+                      ? "text-foreground font-semibold cursor-default"
+                      : "hover:text-primary cursor-pointer active:scale-95"
+                  )}
+                >
+                  {index === 0 && <Layers className="h-3.5 w-3.5" />}
+                  <span>{item.isSubproblem ? `Subproblem ${index}` : 'Original Problem'}</span>
+                </button>
               </div>
-            </div>
-          ))
+            )
+          })
         ) : (
           // Default breadcrumbs
           <>
-            <div className="flex items-center gap-1 hover:text-primary transition-colors cursor-pointer">
+            <div className="flex items-center gap-1 text-foreground font-semibold">
               <Layers className="h-3.5 w-3.5" />
               <span>Original Problem</span>
             </div>
-            <ChevronRight className="h-3 w-3 opacity-50" />
-            <span className="text-foreground font-semibold">Current Step</span>
           </>
         )}
       </div>

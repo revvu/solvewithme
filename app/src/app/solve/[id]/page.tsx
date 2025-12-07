@@ -4,9 +4,11 @@ import Link from "next/link"
 import dynamic from "next/dynamic"
 import { useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, MessageSquare, CheckCircle, HelpCircle, BrainCircuit, Lightbulb, Eye, ArrowUp, Loader2 } from "lucide-react"
+import { ArrowLeft, MessageSquare, CheckCircle, HelpCircle, BrainCircuit, Lightbulb, Eye, ArrowUp, Loader2, Menu, X } from "lucide-react"
 import { ProblemHeader } from "@/components/feature/ProblemHeader"
 import { ChatPanel, ChatMessage } from "@/components/feature/ChatPanel"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { cn } from "@/lib/utils"
 
 // Dynamic import for Canvas to avoid SSR issues with window object
@@ -65,8 +67,27 @@ export default function SolvePage() {
   const [isDoneLoading, setIsDoneLoading] = useState(false)
   const [isRevealLoading, setIsRevealLoading] = useState(false)
 
+  // UI states
+  const [showRevealModal, setShowRevealModal] = useState(false)
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const [hasUnreadMessages, setHasUnreadMessages] = useState(false)
+
   // Canvas ref for getting user work
   const canvasRef = useRef<{ getDataURL: () => string } | null>(null)
+
+  // Track unread messages when chat is closed
+  useEffect(() => {
+    if (!isChatOpen && messages.length > 1) {
+      setHasUnreadMessages(true)
+    }
+  }, [messages.length, isChatOpen])
+
+  // Clear unread when chat opens
+  useEffect(() => {
+    if (isChatOpen) {
+      setHasUnreadMessages(false)
+    }
+  }, [isChatOpen])
 
   // Fetch problem data when current problem changes
   useEffect(() => {
@@ -198,12 +219,15 @@ export default function SolvePage() {
     }
   }, [currentProblem.id, addMessage])
 
-  // Handle "Reveal Solution" button
-  const handleReveal = useCallback(async () => {
-    if (!confirm("Are you sure you want to reveal the solution? This should be a last resort!")) {
-      return
-    }
+  // Handle "Reveal Solution" button - opens confirmation modal
+  const handleRevealClick = useCallback(() => {
+    setShowRevealModal(true)
+    setShowMobileMenu(false)
+  }, [])
 
+  // Actually reveal the solution after confirmation
+  const handleRevealConfirm = useCallback(async () => {
+    setShowRevealModal(false)
     setIsRevealLoading(true)
 
     try {
@@ -223,7 +247,11 @@ export default function SolvePage() {
       })
     } catch (error) {
       console.error('Reveal error:', error)
-      alert('Failed to reveal solution. Please try again.')
+      addMessage({
+        role: 'ai',
+        type: 'normal',
+        content: "Failed to reveal solution. Please try again."
+      })
     } finally {
       setIsRevealLoading(false)
     }
@@ -303,6 +331,18 @@ export default function SolvePage() {
     }
   }, [problemStack.length, addMessage])
 
+  // Handle breadcrumb navigation
+  const handleBreadcrumbNavigate = useCallback((targetIndex: number) => {
+    if (targetIndex >= 0 && targetIndex < problemStack.length - 1) {
+      setProblemStack(prev => prev.slice(0, targetIndex + 1))
+      addMessage({
+        role: 'ai',
+        type: 'normal',
+        content: "Navigating back in the problem hierarchy. Use the insights you've gained to continue!"
+      })
+    }
+  }, [problemStack.length, addMessage])
+
   // Handle chat message send
   const handleChatMessage = useCallback((userMessage: string) => {
     addMessage({ role: 'user', content: userMessage })
@@ -335,8 +375,8 @@ export default function SolvePage() {
           </div>
         </div>
 
-        {/* Action Bar */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        {/* Action Bar - Desktop */}
+        <div className="hidden sm:flex items-center gap-2 sm:gap-3">
 
           {/* Switch to Parent Problem - only show when in subproblem */}
           {hasParentProblem && (
@@ -344,7 +384,7 @@ export default function SolvePage() {
               variant="outline"
               size="sm"
               onClick={handleSwitchToParent}
-              className="hidden sm:flex hover:bg-violet-50 hover:text-violet-600 hover:border-violet-200 dark:hover:bg-violet-900/20 dark:hover:text-violet-500 dark:hover:border-violet-900 transition-all"
+              className="hover:bg-violet-50 hover:text-violet-600 hover:border-violet-200 dark:hover:bg-violet-900/20 dark:hover:text-violet-500 dark:hover:border-violet-900 transition-all"
             >
               <ArrowUp className="w-4 h-4 mr-2" />
               Parent Problem
@@ -356,7 +396,7 @@ export default function SolvePage() {
             size="sm"
             onClick={handleStuck}
             disabled={isStuckLoading}
-            className="hidden sm:flex hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200 dark:hover:bg-amber-900/20 dark:hover:text-amber-500 dark:hover:border-amber-900 transition-all"
+            className="hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200 dark:hover:bg-amber-900/20 dark:hover:text-amber-500 dark:hover:border-amber-900 transition-all"
           >
             {isStuckLoading ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -371,7 +411,7 @@ export default function SolvePage() {
             size="sm"
             onClick={handleCheckThinking}
             disabled={isCheckLoading}
-            className="hidden sm:flex hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 dark:hover:bg-blue-900/20 dark:hover:text-blue-500 dark:hover:border-blue-900 transition-all"
+            className="hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 dark:hover:bg-blue-900/20 dark:hover:text-blue-500 dark:hover:border-blue-900 transition-all"
           >
             {isCheckLoading ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -381,12 +421,12 @@ export default function SolvePage() {
             Check My Thinking
           </Button>
 
-          <div className="w-px h-6 bg-border mx-1 hidden sm:block" />
+          <div className="w-px h-6 bg-border mx-1" />
 
           <Button
             variant="ghost"
             size="sm"
-            onClick={handleReveal}
+            onClick={handleRevealClick}
             disabled={isRevealLoading}
             className="text-muted-foreground hover:text-destructive hidden md:flex"
           >
@@ -412,7 +452,9 @@ export default function SolvePage() {
             {hasParentProblem ? 'Submit' : 'Done'}
           </Button>
 
-          <div className="w-px h-6 bg-border mx-1 hidden sm:block" />
+          <div className="w-px h-6 bg-border mx-1" />
+
+          <ThemeToggle />
 
           <Button
             variant={isChatOpen ? "secondary" : "ghost"}
@@ -421,12 +463,132 @@ export default function SolvePage() {
             className={cn("relative rounded-full transition-all", isChatOpen ? "bg-primary/10 text-primary" : "text-muted-foreground")}
           >
             <MessageSquare className="h-5 w-5" />
-            {!isChatOpen && (
+            {!isChatOpen && hasUnreadMessages && (
               <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500 animate-pulse ring-2 ring-background" />
             )}
           </Button>
         </div>
+
+        {/* Action Bar - Mobile */}
+        <div className="flex sm:hidden items-center gap-2">
+          <Button
+            size="sm"
+            onClick={handleDone}
+            disabled={isDoneLoading}
+            className="glass-button bg-emerald-600 hover:bg-emerald-500 text-white border-0 shadow-emerald-500/20"
+          >
+            {isDoneLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <CheckCircle className="w-4 h-4" />
+            )}
+          </Button>
+
+          <Button
+            variant={isChatOpen ? "secondary" : "ghost"}
+            size="icon"
+            onClick={() => setIsChatOpen(!isChatOpen)}
+            className={cn("relative rounded-full transition-all", isChatOpen ? "bg-primary/10 text-primary" : "text-muted-foreground")}
+          >
+            <MessageSquare className="h-5 w-5" />
+            {!isChatOpen && hasUnreadMessages && (
+              <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500 animate-pulse ring-2 ring-background" />
+            )}
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowMobileMenu(true)}
+            className="rounded-full text-muted-foreground"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+        </div>
       </header>
+
+      {/* Mobile Action Menu */}
+      <Dialog open={showMobileMenu} onOpenChange={setShowMobileMenu}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Actions</DialogTitle>
+            <DialogDescription>Choose an action for this problem</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-2 py-4">
+            {hasParentProblem && (
+              <Button
+                variant="outline"
+                onClick={() => { handleSwitchToParent(); setShowMobileMenu(false); }}
+                className="justify-start h-12"
+              >
+                <ArrowUp className="w-5 h-5 mr-3" />
+                Return to Parent Problem
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              onClick={() => { handleStuck(); setShowMobileMenu(false); }}
+              disabled={isStuckLoading}
+              className="justify-start h-12"
+            >
+              {isStuckLoading ? (
+                <Loader2 className="w-5 h-5 mr-3 animate-spin" />
+              ) : (
+                <HelpCircle className="w-5 h-5 mr-3" />
+              )}
+              I'm Stuck
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => { handleCheckThinking(); setShowMobileMenu(false); }}
+              disabled={isCheckLoading}
+              className="justify-start h-12"
+            >
+              {isCheckLoading ? (
+                <Loader2 className="w-5 h-5 mr-3 animate-spin" />
+              ) : (
+                <Lightbulb className="w-5 h-5 mr-3" />
+              )}
+              Check My Thinking
+            </Button>
+            <div className="h-px bg-border my-2" />
+            <Button
+              variant="ghost"
+              onClick={handleRevealClick}
+              disabled={isRevealLoading}
+              className="justify-start h-12 text-destructive hover:text-destructive hover:bg-destructive/10"
+            >
+              {isRevealLoading ? (
+                <Loader2 className="w-5 h-5 mr-3 animate-spin" />
+              ) : (
+                <Eye className="w-5 h-5 mr-3" />
+              )}
+              Reveal Solution
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reveal Solution Confirmation Modal */}
+      <Dialog open={showRevealModal} onOpenChange={setShowRevealModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reveal Solution?</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to see the solution? This should be a last resort.
+              The best learning happens when you discover the answer yourself!
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setShowRevealModal(false)}>
+              Keep Trying
+            </Button>
+            <Button variant="destructive" onClick={handleRevealConfirm}>
+              Reveal Solution
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Main Content Area */}
       <div className="flex flex-1 flex-col overflow-hidden relative group/layout">
@@ -441,6 +603,7 @@ export default function SolvePage() {
               problemData={problemData}
               isLoading={isLoadingProblem}
               error={problemError}
+              onNavigate={handleBreadcrumbNavigate}
             />
           </div>
         </div>

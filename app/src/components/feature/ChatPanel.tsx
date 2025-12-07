@@ -1,8 +1,8 @@
 "use client"
 import { motion, AnimatePresence } from "framer-motion"
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
-import { X, Bot, Sparkles, Send, User } from "lucide-react"
+import { X, Bot, Sparkles, Send, User, Copy, Check } from "lucide-react"
 import { LatexRenderer } from "@/components/ui/LatexRenderer"
 import { cn } from "@/lib/utils"
 
@@ -10,6 +10,21 @@ export interface ChatMessage {
   role: 'ai' | 'user'
   content: string
   type?: 'insight' | 'subproblem' | 'normal'
+  timestamp?: number
+}
+
+// Format relative time
+function formatRelativeTime(timestamp: number): string {
+  const now = Date.now()
+  const diff = now - timestamp
+  const seconds = Math.floor(diff / 1000)
+  const minutes = Math.floor(seconds / 60)
+  const hours = Math.floor(minutes / 60)
+
+  if (seconds < 60) return 'just now'
+  if (minutes < 60) return `${minutes}m ago`
+  if (hours < 24) return `${hours}h ago`
+  return new Date(timestamp).toLocaleDateString()
 }
 
 interface ChatPanelProps {
@@ -25,14 +40,27 @@ export function ChatPanel({ isOpen, onClose, messages: externalMessages, onSendM
     {
       role: 'ai',
       type: 'normal',
-      content: "Hello! I see you're working on a divisibility problem. Start by writing out the expression for $n = 1, 2, 3$ to see if you spot a pattern."
+      content: "Hello! I see you're working on a divisibility problem. Start by writing out the expression for $n = 1, 2, 3$ to see if you spot a pattern.",
+      timestamp: Date.now()
     }
   ])
 
   const messages = externalMessages ?? internalMessages
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // Copy message to clipboard
+  const handleCopy = useCallback(async (content: string, index: number) => {
+    try {
+      await navigator.clipboard.writeText(content)
+      setCopiedIndex(index)
+      setTimeout(() => setCopiedIndex(null), 2000)
+    } catch (err) {
+      console.error('Failed to copy:', err)
+    }
+  }, [])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -95,7 +123,7 @@ export function ChatPanel({ isOpen, onClose, messages: externalMessages, onSendM
                 <h3 className="font-bold text-sm tracking-tight text-foreground">AI Tutor</h3>
                 <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
                   <Sparkles className="h-3 w-3 text-primary" />
-                  ChatGPT 5.1
+                  Ready to help
                 </p>
               </div>
             </div>
@@ -107,7 +135,7 @@ export function ChatPanel({ isOpen, onClose, messages: externalMessages, onSendM
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-5 space-y-6 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
             {messages.map((msg, i) => (
-              <div key={i} className={cn("flex gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300", msg.role === 'user' ? 'flex-row-reverse' : '')}>
+              <div key={i} className={cn("flex gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300 group/message", msg.role === 'user' ? 'flex-row-reverse' : '')}>
 
                 {/* Avatar */}
                 <div className={cn(
@@ -120,9 +148,9 @@ export function ChatPanel({ isOpen, onClose, messages: externalMessages, onSendM
                 </div>
 
                 {/* Bubble */}
-                <div className="flex flex-col gap-1 items-start max-w-[85%]">
+                <div className={cn("flex flex-col gap-1 max-w-[85%]", msg.role === 'user' ? 'items-end' : 'items-start')}>
                   <div className={cn(
-                    "p-4 rounded-2xl text-sm leading-relaxed shadow-sm relative overflow-hidden",
+                    "p-4 rounded-2xl text-sm leading-relaxed shadow-sm relative overflow-hidden group",
                     msg.role === 'ai'
                       ? "bg-muted/50 text-foreground rounded-tl-none border border-border/50"
                       : "bg-primary text-primary-foreground rounded-tr-none shadow-primary/20",
@@ -132,13 +160,32 @@ export function ChatPanel({ isOpen, onClose, messages: externalMessages, onSendM
                     <LatexRenderer>
                       {msg.content}
                     </LatexRenderer>
+                    {/* Copy button */}
+                    {msg.role === 'ai' && (
+                      <button
+                        onClick={() => handleCopy(msg.content, i)}
+                        className="absolute top-2 right-2 p-1.5 rounded-md bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background"
+                        title="Copy message"
+                      >
+                        {copiedIndex === i ? (
+                          <Check className="h-3.5 w-3.5 text-green-500" />
+                        ) : (
+                          <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+                        )}
+                      </button>
+                    )}
                   </div>
-                  {msg.type === 'insight' && msg.role === 'ai' && (
-                    <span className="text-[10px] uppercase font-bold text-amber-500 tracking-wider px-1">Key Insight</span>
-                  )}
-                  {msg.type === 'subproblem' && msg.role === 'ai' && (
-                    <span className="text-[10px] uppercase font-bold text-violet-500 tracking-wider px-1">New Subproblem</span>
-                  )}
+                  <div className={cn("flex items-center gap-2 px-1", msg.role === 'user' ? 'flex-row-reverse' : '')}>
+                    {msg.type === 'insight' && msg.role === 'ai' && (
+                      <span className="text-[10px] uppercase font-bold text-amber-500 tracking-wider">Key Insight</span>
+                    )}
+                    {msg.type === 'subproblem' && msg.role === 'ai' && (
+                      <span className="text-[10px] uppercase font-bold text-violet-500 tracking-wider">New Subproblem</span>
+                    )}
+                    {msg.timestamp && (
+                      <span className="text-[10px] text-muted-foreground/60">{formatRelativeTime(msg.timestamp)}</span>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
@@ -166,7 +213,7 @@ export function ChatPanel({ isOpen, onClose, messages: externalMessages, onSendM
               <div className="relative flex-1">
                 <input
                   className="w-full bg-secondary/50 border-0 rounded-2xl px-5 py-3.5 pl-5 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-muted-foreground/70"
-                  placeholder="Ask for a hint..."
+                  placeholder="Type a message..."
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                 />

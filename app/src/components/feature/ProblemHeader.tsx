@@ -75,7 +75,7 @@ export function ProblemHeader({
   return (
     <div className="h-full w-full flex flex-col font-sans">
       {/* Breadcrumbs / Meta Bar */}
-      <div className="flex items-center gap-2 px-6 py-3 border-b border-border/50 bg-card/60 text-xs font-medium text-muted-foreground overflow-x-auto">
+      <div className="flex items-center gap-2 px-6 py-3 border-b border-border bg-card text-xs font-medium text-muted-foreground overflow-x-auto">
         {problemStack && problemStack.length > 0 ? (
           // Render dynamic breadcrumbs based on problem stack
           problemStack.map((item, index) => {

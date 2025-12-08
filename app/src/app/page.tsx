@@ -5,6 +5,16 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useRef, useState, useEffect, useCallback } from "react"
 import { cn } from "@/lib/utils"
+import { formatRelativeTime } from "@/lib/format-time"
+
+interface RecentProblem {
+  id: string;
+  title: string;
+  category: string;
+  status: string;
+  lastActiveAt: string;
+  createdAt: string;
+}
 import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { useToast } from "@/components/ui/toast"
 
@@ -19,6 +29,41 @@ export default function Home() {
   const [pastedImage, setPastedImage] = useState<File | null>(null)
   const [isHovering, setIsHovering] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
+  const [recentProblems, setRecentProblems] = useState<RecentProblem[]>([])
+  const [isLoadingRecent, setIsLoadingRecent] = useState(true)
+
+  // Fetch recent problems on mount
+  useEffect(() => {
+    async function fetchRecentProblems() {
+      try {
+        const response = await fetch('/api/recent-problems?limit=5')
+        if (response.ok) {
+          const data = await response.json()
+          setRecentProblems(data.problems)
+        }
+      } catch (error) {
+        console.error('Failed to fetch recent problems:', error)
+      } finally {
+        setIsLoadingRecent(false)
+      }
+    }
+    fetchRecentProblems()
+  }, [])
+
+  // Helper to get category abbreviation for card badge
+  const getCategoryAbbreviation = (category: string): string => {
+    const abbreviations: Record<string, string> = {
+      'Number Theory': 'NUM',
+      'Calculus': 'CALC',
+      'Algebra': 'ALG',
+      'Geometry': 'GEO',
+      'Combinatorics': 'COMB',
+      'Probability': 'PROB',
+      'Statistics': 'STAT',
+      'General': 'GEN',
+    };
+    return abbreviations[category] || category.substring(0, 4).toUpperCase();
+  };
 
   // Auto-focus textarea on load
   useEffect(() => {
@@ -154,7 +199,7 @@ export default function Home() {
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute inset-0 bg-gradient-to-br from-amber-50/30 via-background to-background dark:from-amber-950/10 dark:via-background dark:to-background" />
         <div className="absolute top-[-15%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-amber-400/8 dark:bg-amber-500/5 blur-[120px]" />
-        <div className="absolute inset-0 bg-dot-pattern text-stone-300/40 dark:text-stone-700/30" />
+        <div className="absolute inset-0 bg-dot-pattern text-stone-300/20 dark:text-stone-700/15" />
       </div>
 
       {/* Header */}
@@ -318,43 +363,61 @@ export default function Home() {
               <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                 <History className="h-4 w-4" /> Continue Learning
               </h3>
-              <Link href="/solve/1" className="text-sm text-primary hover:text-primary/80 transition-colors font-medium hover:underline underline-offset-4">
-                View All
-              </Link>
+              {recentProblems.length > 0 && (
+                <Link href="/problems" className="text-sm text-primary hover:text-primary/80 transition-colors font-medium hover:underline underline-offset-4">
+                  View All
+                </Link>
+              )}
             </div>
 
             <div className="grid gap-4">
-              {/* Recent Item 1 */}
-              <Link href="/solve/1">
-                <div className="group relative overflow-hidden rounded-xl bg-card/50 border border-border/50 hover:bg-card/80 transition-all duration-300 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 p-5 flex items-center gap-5">
-                  <div className="h-14 w-14 rounded-lg bg-gradient-to-br from-primary/15 to-amber-500/15 flex items-center justify-center text-sm font-bold text-primary ring-1 ring-inset ring-border/50 group-hover:scale-105 transition-transform">
-                    AIME
+              {isLoadingRecent ? (
+                // Loading skeleton
+                <>
+                  {[1, 2].map((i) => (
+                    <div key={i} className="rounded-xl bg-card border border-border p-5 flex items-center gap-5 animate-pulse shadow-sm">
+                      <div className="h-14 w-14 rounded-lg bg-muted" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 w-48 bg-muted rounded" />
+                        <div className="h-3 w-32 bg-muted rounded" />
+                      </div>
+                    </div>
+                  ))}
+                </>
+              ) : recentProblems.length === 0 ? (
+                // Empty state
+                <div className="rounded-xl bg-card border border-border border-dashed p-8 text-center shadow-sm">
+                  <div className="h-14 w-14 rounded-lg bg-gradient-to-br from-primary/15 to-amber-500/15 flex items-center justify-center mx-auto mb-4 ring-1 ring-inset ring-border">
+                    <History className="h-6 w-6 text-primary/50" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">Problem 1 (Number Theory)</h4>
-                    <p className="text-xs text-muted-foreground mt-1">Last active: 2 hours ago</p>
-                  </div>
-                  <div className="h-8 w-8 rounded-full border border-border/50 flex items-center justify-center opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
-                    <ArrowRight className="h-4 w-4 text-primary" />
-                  </div>
+                  <h4 className="font-semibold text-foreground mb-2">No problems yet</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Upload your first math problem above to get started!
+                  </p>
                 </div>
-              </Link>
-
-              {/* Recent Item 2 */}
-              <Link href="/solve/2">
-                <div className="group relative overflow-hidden rounded-xl bg-card/50 border border-border/50 hover:bg-card/80 transition-all duration-300 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 p-5 flex items-center gap-5">
-                  <div className="h-14 w-14 rounded-lg bg-gradient-to-br from-primary/15 to-amber-500/15 flex items-center justify-center text-sm font-bold text-primary ring-1 ring-inset ring-border/50 group-hover:scale-105 transition-transform">
-                    CALC
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">Problem 2 (Calculus)</h4>
-                    <p className="text-xs text-muted-foreground mt-1">Last active: Yesterday</p>
-                  </div>
-                  <div className="h-8 w-8 rounded-full border border-border/50 flex items-center justify-center opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
-                    <ArrowRight className="h-4 w-4 text-primary" />
-                  </div>
-                </div>
-              </Link>
+              ) : (
+                // Problem cards
+                recentProblems.map((problem) => (
+                  <Link key={problem.id} href={`/solve/${problem.id}`}>
+                    <div className="group relative overflow-hidden rounded-xl bg-card border border-border hover:bg-card/95 transition-all duration-300 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 p-5 flex items-center gap-5 shadow-sm">
+                      <div className="h-14 w-14 rounded-lg bg-gradient-to-br from-primary/15 to-amber-500/15 flex items-center justify-center text-sm font-bold text-primary ring-1 ring-inset ring-border/50 group-hover:scale-105 transition-transform">
+                        {getCategoryAbbreviation(problem.category)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+                          {problem.title}
+                        </h4>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Last active: {formatRelativeTime(problem.lastActiveAt)}
+                        </p>
+                      </div>
+                      <div className="h-8 w-8 rounded-full border border-border/50 flex items-center justify-center opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
+                        <ArrowRight className="h-4 w-4 text-primary" />
+                      </div>
+                    </div>
+                  </Link>
+                ))
+              )}
             </div>
           </div>
 

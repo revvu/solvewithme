@@ -363,7 +363,7 @@ export default function SolvePage() {
         <div className="absolute top-[-15%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-amber-400/8 dark:bg-amber-500/5 blur-[120px]" />
 
         {/* Dot grid pattern - graph paper aesthetic */}
-        <div className="absolute inset-0 bg-dot-pattern text-stone-300/60 dark:text-stone-700/40" />
+        <div className="absolute inset-0 bg-dot-pattern text-stone-300/20 dark:text-stone-700/15" />
 
         {/* Subtle noise texture */}
         <div className="absolute inset-0 bg-noise opacity-50" />
@@ -605,7 +605,7 @@ export default function SolvePage() {
 
         {/* Split View: Top Problem */}
         <div className="h-[45%] min-h-[300px] border-b border-border/50 shrink-0 relative overflow-hidden flex flex-col z-10 transition-all duration-500 ease-in-out">
-          <div className="absolute inset-0 bg-card/50 z-0" />
+          <div className="absolute inset-0 bg-card z-0" />
 
           <div className="flex-1 overflow-hidden relative z-10">
             <ProblemHeader

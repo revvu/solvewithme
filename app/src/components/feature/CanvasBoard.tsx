@@ -71,7 +71,7 @@ export function CanvasBoard() {
     return () => {
       resizeObserver.disconnect()
     }
-  }, [])
+  }, [isMounted])
 
 
   // Redraw function

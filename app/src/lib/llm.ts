@@ -31,45 +31,60 @@ export const llmService = {
    */
   async extractProblemText(imageUrl: string): Promise<LLMResponse> {
     try {
-      const response = await getOpenAI().chat.completions.create({
+      const response = await getOpenAI().responses.create({
         model: getModel(),
-        messages: [
-          {
-            role: 'system',
-            content: `You are an expert at reading and transcribing math and science problems from images.
+        instructions: `You are an expert at reading and transcribing math and science problems from images.
 
 Your task is to:
 1. Carefully read the problem from the image
 2. Transcribe it accurately, preserving all mathematical notation
 3. Use LaTeX notation for all math expressions (e.g., $x^2$, $\\frac{a}{b}$, $\\int$)
-4. Identify the subject/category of the problem
-
-Respond in JSON format:
-{
-  "problem_text": "The full problem statement with LaTeX math notation. Use <br /> for line breaks if the problem has multiple parts or lines.",
-  "category": "The subject category (e.g., 'Number Theory', 'Calculus', 'Algebra', 'Geometry', 'Physics', etc.)",
-  "title": "A short descriptive title for the problem (e.g., 'Divisibility Problem', 'Integration by Parts')"
-}`
-          },
+4. Identify the subject/category of the problem`,
+        input: [
           {
             role: 'user',
             content: [
               {
-                type: 'image_url',
-                image_url: { url: imageUrl }
+                type: 'input_image',
+                image_url: imageUrl,
+                detail: 'auto'
               },
               {
-                type: 'text',
+                type: 'input_text',
                 text: 'Please read and transcribe this problem exactly as shown. Use LaTeX for all mathematical expressions.'
               }
             ]
           }
         ],
-        response_format: { type: 'json_object' },
-        max_tokens: 2048,
+        text: {
+          format: {
+            type: 'json_schema',
+            name: 'extract_problem',
+            schema: {
+              type: 'object',
+              properties: {
+                problem_text: {
+                  type: 'string',
+                  description: 'The full problem statement with LaTeX math notation. Use <br /> for line breaks if the problem has multiple parts or lines.'
+                },
+                category: {
+                  type: 'string',
+                  description: "The subject category (e.g., 'Number Theory', 'Calculus', 'Algebra', 'Geometry', 'Physics', etc.)"
+                },
+                title: {
+                  type: 'string',
+                  description: "A short descriptive title for the problem (e.g., 'Divisibility Problem', 'Integration by Parts')"
+                }
+              },
+              required: ['problem_text', 'category', 'title'],
+              additionalProperties: false
+            },
+            strict: true
+          }
+        }
       });
 
-      const content = response.choices[0]?.message?.content;
+      const content = response.output_text;
       if (!content) {
         return { success: false, error: 'No response from LLM' };
       }
@@ -87,48 +102,63 @@ Respond in JSON format:
    */
   async solveProblem(problemText: string, imageUrl?: string): Promise<LLMResponse> {
     try {
-      const userContent: OpenAI.Chat.ChatCompletionContentPart[] = [];
+      const userContent: Array<
+        { type: 'input_text'; text: string } |
+        { type: 'input_image'; image_url: string; detail: 'auto' | 'low' | 'high' }
+      > = [];
 
       // Add image if provided
       if (imageUrl) {
         userContent.push({
-          type: 'image_url',
-          image_url: { url: imageUrl }
+          type: 'input_image',
+          image_url: imageUrl,
+          detail: 'auto'
         });
       }
 
       // Add text prompt
       userContent.push({
-        type: 'text',
+        type: 'input_text',
         text: `Please solve this problem completely. Show all steps.\n\nProblem:\n${problemText}`
       });
 
-      const response = await getOpenAI().chat.completions.create({
+      const response = await getOpenAI().responses.create({
         model: getModel(),
-        messages: [
-          {
-            role: 'system',
-            content: `You are an expert math and science tutor. When given a problem, you must:
+        instructions: `You are an expert math and science tutor. When given a problem, you must:
 1. Carefully read and understand the problem
 2. Solve it step by step
-3. Provide the final answer
-
-Respond in JSON format:
-{
-  "solution": "detailed step-by-step solution with LaTeX math notation where appropriate",
-  "answer": "the final answer (concise)"
-}`
-          },
+3. Provide the final answer`,
+        input: [
           {
             role: 'user',
             content: userContent
           }
         ],
-        response_format: { type: 'json_object' },
-        max_tokens: 4096,
+        text: {
+          format: {
+            type: 'json_schema',
+            name: 'solve_problem',
+            schema: {
+              type: 'object',
+              properties: {
+                solution: {
+                  type: 'string',
+                  description: 'Detailed step-by-step solution with LaTeX math notation where appropriate'
+                },
+                answer: {
+                  type: 'string',
+                  description: 'The final answer (concise)'
+                }
+              },
+              required: ['solution', 'answer'],
+              additionalProperties: false
+            },
+            strict: true
+          }
+        }
       });
 
-      const content = response.choices[0]?.message?.content;
+      const content = response.output_text;
       if (!content) {
         return { success: false, error: 'No response from LLM' };
       }
@@ -183,42 +213,63 @@ Respond in JSON format:
     userWork: { images?: string[]; text?: string }
   ): Promise<LLMResponse> {
     try {
-      const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
-        {
-          role: 'system',
-          content: `You are a Socratic tutor helping a student who is stuck on a problem. Your goal is to identify what concept or insight the student is missing and create a simpler subproblem that will help them discover this insight on their own.
+      const response = await getOpenAI().responses.create({
+        model: getModel(),
+        instructions: `You are a Socratic tutor helping a student who is stuck on a problem. Your goal is to identify what concept or insight the student is missing and create a simpler subproblem that will help them discover this insight on their own.
 
 You have access to:
 1. The original problem
 2. The hidden solution (the student cannot see this)
 3. The student's work so far
 
-Analyze what the student understands and what they're missing. Then create a targeted subproblem.
-
-Respond in JSON format:
-{
-  "student_summary": "Brief description of what the student seems to understand",
-  "missing_insight": "The key concept or step the student is missing",
-  "subproblem_text": "A simpler problem that will help them discover the missing insight. Use LaTeX for math.",
-  "tutor_message_intro": "An encouraging message acknowledging their effort (1-2 sentences)",
-  "tutor_message_subproblem": "A message introducing the subproblem and why it will help (1-2 sentences)",
-  "hidden_subproblem_solution": "The solution to the subproblem (hidden from student)"
-}`
-        },
-        {
-          role: 'user',
-          content: buildProblemContext(problemContent, hiddenSolution, userWork)
+Analyze what the student understands and what they're missing. Then create a targeted subproblem.`,
+        input: [
+          {
+            role: 'user',
+            content: buildProblemContext(problemContent, hiddenSolution, userWork)
+          }
+        ],
+        text: {
+          format: {
+            type: 'json_schema',
+            name: 'generate_subproblem',
+            schema: {
+              type: 'object',
+              properties: {
+                student_summary: {
+                  type: 'string',
+                  description: 'Brief description of what the student seems to understand'
+                },
+                missing_insight: {
+                  type: 'string',
+                  description: 'The key concept or step the student is missing'
+                },
+                subproblem_text: {
+                  type: 'string',
+                  description: 'A simpler problem that will help them discover the missing insight. Use LaTeX for math.'
+                },
+                tutor_message_intro: {
+                  type: 'string',
+                  description: 'An encouraging message acknowledging their effort (1-2 sentences)'
+                },
+                tutor_message_subproblem: {
+                  type: 'string',
+                  description: 'A message introducing the subproblem and why it will help (1-2 sentences)'
+                },
+                hidden_subproblem_solution: {
+                  type: 'string',
+                  description: 'The solution to the subproblem (hidden from student)'
+                }
+              },
+              required: ['student_summary', 'missing_insight', 'subproblem_text', 'tutor_message_intro', 'tutor_message_subproblem', 'hidden_subproblem_solution'],
+              additionalProperties: false
+            },
+            strict: true
+          }
         }
-      ];
-
-      const response = await getOpenAI().chat.completions.create({
-        model: getModel(),
-        messages,
-        response_format: { type: 'json_object' },
-        max_tokens: 2048,
       });
 
-      const content = response.choices[0]?.message?.content;
+      const content = response.output_text;
       if (!content) {
         return { success: false, error: 'No response from LLM' };
       }
@@ -236,32 +287,38 @@ Respond in JSON format:
     userWork: { images?: string[]; text?: string }
   ): Promise<LLMResponse> {
     try {
-      const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
-        {
-          role: 'system',
-          content: `You are a supportive math tutor. Review the student's work and provide helpful feedback.
-
-Be encouraging but honest. If they're on the right track, tell them. If there's an error, gently point them toward it without giving away the answer.
-
-Respond in JSON format:
-{
-  "feedback": "Your feedback to the student (2-4 sentences). Use LaTeX for any math notation."
-}`
-        },
-        {
-          role: 'user',
-          content: buildCheckContext(problemContent, userWork)
-        }
-      ];
-
-      const response = await getOpenAI().chat.completions.create({
+      const response = await getOpenAI().responses.create({
         model: getModel(),
-        messages,
-        response_format: { type: 'json_object' },
-        max_tokens: 1024,
+        instructions: `You are a supportive math tutor. Review the student's work and provide helpful feedback.
+
+Be encouraging but honest. If they're on the right track, tell them. If there's an error, gently point them toward it without giving away the answer.`,
+        input: [
+          {
+            role: 'user',
+            content: buildCheckContext(problemContent, userWork)
+          }
+        ],
+        text: {
+          format: {
+            type: 'json_schema',
+            name: 'check_thinking',
+            schema: {
+              type: 'object',
+              properties: {
+                feedback: {
+                  type: 'string',
+                  description: 'Your feedback to the student (2-4 sentences). Use LaTeX for any math notation.'
+                }
+              },
+              required: ['feedback'],
+              additionalProperties: false
+            },
+            strict: true
+          }
+        }
       });
 
-      const content = response.choices[0]?.message?.content;
+      const content = response.output_text;
       if (!content) {
         return { success: false, error: 'No response from LLM' };
       }
@@ -280,33 +337,42 @@ Respond in JSON format:
     userAttempt: { images?: string[]; text?: string }
   ): Promise<LLMResponse> {
     try {
-      const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
-        {
-          role: 'system',
-          content: `You are verifying if a student has correctly solved a subproblem.
-
-Review their work and determine if they've grasped the concept. If they have, provide an encouraging message that helps them connect this insight back to the original problem.
-
-Respond in JSON format:
-{
-  "solved": true/false,
-  "tutor_message": "Feedback for the student. If solved, help them see how this applies to the original problem. If not solved, provide a gentle hint."
-}`
-        },
-        {
-          role: 'user',
-          content: buildVerifyContext(originalProblem, subproblem, userAttempt)
-        }
-      ];
-
-      const response = await getOpenAI().chat.completions.create({
+      const response = await getOpenAI().responses.create({
         model: getModel(),
-        messages,
-        response_format: { type: 'json_object' },
-        max_tokens: 1024,
+        instructions: `You are verifying if a student has correctly solved a subproblem.
+
+Review their work and determine if they've grasped the concept. If they have, provide an encouraging message that helps them connect this insight back to the original problem.`,
+        input: [
+          {
+            role: 'user',
+            content: buildVerifyContext(originalProblem, subproblem, userAttempt)
+          }
+        ],
+        text: {
+          format: {
+            type: 'json_schema',
+            name: 'verify_subproblem',
+            schema: {
+              type: 'object',
+              properties: {
+                solved: {
+                  type: 'boolean',
+                  description: 'Whether the student correctly solved the subproblem'
+                },
+                tutor_message: {
+                  type: 'string',
+                  description: 'Feedback for the student. If solved, help them see how this applies to the original problem. If not solved, provide a gentle hint.'
+                }
+              },
+              required: ['solved', 'tutor_message'],
+              additionalProperties: false
+            },
+            strict: true
+          }
+        }
       });
 
-      const content = response.choices[0]?.message?.content;
+      const content = response.output_text;
       if (!content) {
         return { success: false, error: 'No response from LLM' };
       }

@@ -1,5 +1,5 @@
 // Re-export Prisma generated types
-export type { ProblemNode, Attempt, GeneratedBy, ProblemStatus } from '@/generated/prisma';
+export type { ProblemNode, Attempt, GeneratedBy, ProblemStatus } from '@prisma/client';
 
 // Content types for JSON fields
 export interface ProblemContent {

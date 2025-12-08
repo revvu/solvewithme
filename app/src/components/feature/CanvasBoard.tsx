@@ -77,7 +77,7 @@ export function CanvasBoard() {
     })
   }, [tool])
 
-  if (!isMounted) return <div className="w-full h-full bg-white dark:bg-zinc-900" />
+  if (!isMounted) return <div className="w-full h-full bg-zinc-50" />
 
   // Determine brush color based on tool
   const getBrushColor = () => {
@@ -96,7 +96,7 @@ export function CanvasBoard() {
   }
 
   return (
-    <div ref={containerRef} className="relative w-full h-full bg-white dark:bg-zinc-950 cursor-crosshair overflow-hidden touch-none">
+    <div ref={containerRef} className="relative w-full h-full bg-white cursor-crosshair overflow-hidden touch-none">
       {dimensions.width > 0 && (
         <CanvasDraw
           ref={canvasRef}

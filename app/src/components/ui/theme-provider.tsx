@@ -82,9 +82,11 @@ export function ThemeProvider({
   )
 
   // Prevent flash of wrong theme
-  if (!mounted) {
-    return <>{children}</>
-  }
+  // We still need to provide the context even if not mounted, 
+  // otherwise components using useTheme will throw during SSR/build
+  // if (!mounted) {
+  //   return <>{children}</>
+  // }
 
   return (
     <ThemeProviderContext.Provider value={value}>

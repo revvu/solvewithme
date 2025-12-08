@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
 
     // 2. Call LLM
     const llmResult = await llmService.checkThinking(
-      problemNode.content,
+      problemNode.content as any,
       { images: userWorkImages, text: userText }
     );
 

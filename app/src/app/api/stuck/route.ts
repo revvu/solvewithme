@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
 
     // 2. Call LLM to generate subproblem
     const llmResult = await llmService.generateSubproblem(
-      problemNode.content,
+      problemNode.content as any,
       problemNode.hiddenSolution,
       { images: userWorkImages, text: userText }
     );

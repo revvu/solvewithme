@@ -150,16 +150,17 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background font-sans text-foreground selection:bg-primary/30 overflow-x-hidden relative">
 
-      {/* Dynamic Background Elements */}
+      {/* Warm Scholar Background */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-primary/20 blur-[120px] opacity-40 animate-pulse" style={{ animationDuration: '8s' }} />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] rounded-full bg-indigo-600/10 blur-[150px] opacity-30" />
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-50/30 via-background to-background dark:from-amber-950/10 dark:via-background dark:to-background" />
+        <div className="absolute top-[-15%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-amber-400/8 dark:bg-amber-500/5 blur-[120px]" />
+        <div className="absolute inset-0 bg-dot-pattern text-stone-300/40 dark:text-stone-700/30" />
       </div>
 
       {/* Header */}
-      <header className="sticky top-0 z-50 flex h-20 items-center justify-between border-b border-white/5 bg-background/60 px-6 sm:px-10 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 flex h-20 items-center justify-between border-b border-border/50 bg-card/60 px-6 sm:px-10 backdrop-blur-xl">
         <Link href="/" className="flex items-center gap-3 group cursor-pointer">
-          <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-indigo-600 text-white shadow-lg shadow-primary/20 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3">
+          <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-amber-600 text-white shadow-lg shadow-primary/20 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3">
             <BrainCircuit className="h-6 w-6" />
             <div className="absolute inset-0 rounded-xl bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
@@ -181,7 +182,7 @@ export default function Home() {
             </div>
             <h2 className="text-5xl sm:text-7xl font-extrabold tracking-tight text-foreground">
               Master Math, <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-indigo-500 to-violet-500">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-amber-600">
                 Not Just Answers.
               </span>
             </h2>
@@ -201,7 +202,7 @@ export default function Home() {
             onDrop={handleDrop}
           >
             <div className={cn(
-              "absolute -inset-1 rounded-[2rem] bg-gradient-to-r from-primary via-indigo-500 to-violet-500 opacity-20 blur-xl transition-opacity duration-500 group-hover:opacity-40",
+              "absolute -inset-1 rounded-[2rem] bg-gradient-to-r from-primary/60 to-amber-500/60 opacity-20 blur-xl transition-opacity duration-500 group-hover:opacity-40",
               (inputText || pastedImage) && "opacity-40",
               isDragging && "opacity-60"
             )} />
@@ -325,15 +326,15 @@ export default function Home() {
             <div className="grid gap-4">
               {/* Recent Item 1 */}
               <Link href="/solve/1">
-                <div className="group relative overflow-hidden rounded-2xl bg-card/30 border border-white/5 hover:bg-card/50 transition-all duration-300 hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5 p-5 flex items-center gap-5">
-                  <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-violet-500/20 to-indigo-500/20 flex items-center justify-center text-sm font-bold text-primary ring-1 ring-inset ring-white/10 group-hover:scale-105 transition-transform">
+                <div className="group relative overflow-hidden rounded-xl bg-card/50 border border-border/50 hover:bg-card/80 transition-all duration-300 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 p-5 flex items-center gap-5">
+                  <div className="h-14 w-14 rounded-lg bg-gradient-to-br from-primary/15 to-amber-500/15 flex items-center justify-center text-sm font-bold text-primary ring-1 ring-inset ring-border/50 group-hover:scale-105 transition-transform">
                     AIME
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">Problem 1 (Number Theory)</h4>
                     <p className="text-xs text-muted-foreground mt-1">Last active: 2 hours ago</p>
                   </div>
-                  <div className="h-8 w-8 rounded-full border border-white/10 flex items-center justify-center opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
+                  <div className="h-8 w-8 rounded-full border border-border/50 flex items-center justify-center opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
                     <ArrowRight className="h-4 w-4 text-primary" />
                   </div>
                 </div>
@@ -341,16 +342,16 @@ export default function Home() {
 
               {/* Recent Item 2 */}
               <Link href="/solve/2">
-                <div className="group relative overflow-hidden rounded-2xl bg-card/30 border border-white/5 hover:bg-card/50 transition-all duration-300 hover:border-orange-500/20 hover:shadow-lg hover:shadow-orange-500/5 p-5 flex items-center gap-5">
-                  <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-orange-500/20 to-amber-500/20 flex items-center justify-center text-sm font-bold text-orange-500 ring-1 ring-inset ring-white/10 group-hover:scale-105 transition-transform">
+                <div className="group relative overflow-hidden rounded-xl bg-card/50 border border-border/50 hover:bg-card/80 transition-all duration-300 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 p-5 flex items-center gap-5">
+                  <div className="h-14 w-14 rounded-lg bg-gradient-to-br from-primary/15 to-amber-500/15 flex items-center justify-center text-sm font-bold text-primary ring-1 ring-inset ring-border/50 group-hover:scale-105 transition-transform">
                     CALC
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-foreground truncate group-hover:text-orange-500 transition-colors">Problem 2 (Calculus)</h4>
+                    <h4 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">Problem 2 (Calculus)</h4>
                     <p className="text-xs text-muted-foreground mt-1">Last active: Yesterday</p>
                   </div>
-                  <div className="h-8 w-8 rounded-full border border-white/10 flex items-center justify-center opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
-                    <ArrowRight className="h-4 w-4 text-orange-500" />
+                  <div className="h-8 w-8 rounded-full border border-border/50 flex items-center justify-center opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
+                    <ArrowRight className="h-4 w-4 text-primary" />
                   </div>
                 </div>
               </Link>

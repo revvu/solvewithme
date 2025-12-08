@@ -1,7 +1,8 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", sans-serif;
+  --font-sans: "DM Sans", system-ui, sans-serif;
+  --font-serif: "Fraunces", Georgia, serif;
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -36,50 +37,85 @@
   }
 }
 
+/* Warm Scholar Color Palette */
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 224 71.4% 4.1%;
-    --card: 0 0% 100%;
-    --card-foreground: 224 71.4% 4.1%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 224 71.4% 4.1%;
-    --primary: 262.1 83.3% 57.8%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 220 14.3% 95.9%;
-    --secondary-foreground: 220.9 39.3% 11%;
-    --muted: 220 14.3% 95.9%;
-    --muted-foreground: 220 8.9% 46.1%;
-    --accent: 220 14.3% 95.9%;
-    --accent-foreground: 220.9 39.3% 11%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 262.1 83.3% 57.8%;
+    /* Warm off-white, paper-like background */
+    --background: 40 20% 97%;
+    --foreground: 25 20% 15%;
+
+    /* Card surfaces */
+    --card: 40 25% 99%;
+    --card-foreground: 25 20% 15%;
+
+    /* Popover */
+    --popover: 40 25% 99%;
+    --popover-foreground: 25 20% 15%;
+
+    /* Warm amber/gold primary */
+    --primary: 32 95% 44%;
+    --primary-foreground: 40 33% 98%;
+
+    /* Warm gray secondary */
+    --secondary: 36 15% 93%;
+    --secondary-foreground: 25 15% 20%;
+
+    /* Muted warm tones */
+    --muted: 36 12% 90%;
+    --muted-foreground: 30 8% 45%;
+
+    /* Warm accent - deep teal for contrast */
+    --accent: 175 40% 35%;
+    --accent-foreground: 40 33% 98%;
+
+    /* Destructive stays red but warmer */
+    --destructive: 4 84% 55%;
+    --destructive-foreground: 40 33% 98%;
+
+    /* Warm borders */
+    --border: 36 15% 88%;
+    --input: 36 15% 88%;
+    --ring: 32 95% 44%;
     --radius: 0.75rem;
   }
 
   .dark {
-    --background: 224 71.4% 4.1%;
-    --foreground: 210 20% 98%;
-    --card: 224 71.4% 4.1%;
-    --card-foreground: 210 20% 98%;
-    --popover: 224 71.4% 4.1%;
-    --popover-foreground: 210 20% 98%;
-    --primary: 263.4 70% 50.4%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 215 27.9% 16.9%;
-    --secondary-foreground: 210 20% 98%;
-    --muted: 215 27.9% 16.9%;
-    --muted-foreground: 217.9 10.6% 64.9%;
-    --accent: 215 27.9% 16.9%;
-    --accent-foreground: 210 20% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 215 27.9% 16.9%;
-    --input: 215 27.9% 16.9%;
-    --ring: 263.4 70% 50.4%;
+    /* Warm near-black background */
+    --background: 30 15% 7%;
+    --foreground: 40 15% 92%;
+
+    /* Dark card surfaces */
+    --card: 30 12% 10%;
+    --card-foreground: 40 15% 92%;
+
+    /* Dark popover */
+    --popover: 30 12% 10%;
+    --popover-foreground: 40 15% 92%;
+
+    /* Brighter amber for dark mode */
+    --primary: 38 92% 50%;
+    --primary-foreground: 30 15% 7%;
+
+    /* Dark secondary */
+    --secondary: 30 10% 15%;
+    --secondary-foreground: 40 15% 92%;
+
+    /* Dark muted */
+    --muted: 30 10% 15%;
+    --muted-foreground: 35 8% 55%;
+
+    /* Dark accent */
+    --accent: 175 35% 40%;
+    --accent-foreground: 40 33% 98%;
+
+    /* Dark destructive */
+    --destructive: 4 72% 45%;
+    --destructive-foreground: 40 33% 98%;
+
+    /* Dark borders */
+    --border: 30 10% 18%;
+    --input: 30 10% 18%;
+    --ring: 38 92% 50%;
   }
 }
 
@@ -92,11 +128,46 @@ body {
 }
 
 @layer utilities {
-  .glass-panel {
-    @apply bg-background/60 backdrop-blur-xl border border-border/50 shadow-xl;
+  /* Serif utility for headings */
+  .font-serif {
+    font-family: "Fraunces", Georgia, serif;
   }
-  
+
+  /* Glass panel - warmer tone */
+  .glass-panel {
+    @apply bg-card/80 backdrop-blur-xl border border-border/60 shadow-xl;
+  }
+
+  /* Glass button - warm amber */
   .glass-button {
-    @apply bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 backdrop-blur-sm hover:bg-primary/100 active:scale-95 transition-all;
+    @apply bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25 backdrop-blur-sm hover:bg-primary active:scale-95 transition-all;
+  }
+
+  /* Subtle dot grid pattern (graph paper aesthetic) */
+  .bg-dot-pattern {
+    background-image: radial-gradient(circle, currentColor 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  /* Fine grid lines (graph paper) */
+  .bg-grid-pattern {
+    background-image:
+      linear-gradient(to right, currentColor 1px, transparent 1px),
+      linear-gradient(to bottom, currentColor 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  /* Warm noise texture */
+  .bg-noise {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+  }
+
+  /* Problem card left accent border */
+  .problem-card {
+    @apply relative rounded-xl border-l-4 border-l-primary bg-card shadow-lg shadow-primary/5 transition-all duration-300;
+  }
+
+  .problem-card:hover {
+    @apply shadow-xl shadow-primary/10;
   }
 }

@@ -354,21 +354,30 @@ export default function SolvePage() {
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-background font-sans transition-colors selection:bg-primary/20 relative">
 
-      {/* Premium Background Effects */}
+      {/* Warm Scholar Background */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/5 blur-[120px] mix-blend-multiply dark:mix-blend-screen animate-pulse" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-blue-500/5 blur-[120px] mix-blend-multiply dark:mix-blend-screen animate-pulse delay-1000" />
+        {/* Base warm background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-50/50 via-background to-background dark:from-amber-950/20 dark:via-background dark:to-background" />
+
+        {/* Subtle warm glow - top left only */}
+        <div className="absolute top-[-15%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-amber-400/8 dark:bg-amber-500/5 blur-[120px]" />
+
+        {/* Dot grid pattern - graph paper aesthetic */}
+        <div className="absolute inset-0 bg-dot-pattern text-stone-300/60 dark:text-stone-700/40" />
+
+        {/* Subtle noise texture */}
+        <div className="absolute inset-0 bg-noise opacity-50" />
       </div>
 
-      {/* Premium Header */}
-      <header className="h-16 flex items-center justify-between px-4 sm:px-6 border-b border-border/40 bg-background/60 backdrop-blur-xl z-30 shrink-0 relative supports-[backdrop-filter]:bg-background/60">
+      {/* Refined Header */}
+      <header className="h-16 flex items-center justify-between px-4 sm:px-6 border-b border-border/60 bg-card/80 backdrop-blur-md z-30 shrink-0 relative shadow-sm">
         <div className="flex items-center gap-4">
           <Link href="/">
-            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground rounded-full hover:bg-primary/10">
+            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground rounded-full hover:bg-secondary">
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/50 border border-border/50">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/80 border border-border/60">
             <BrainCircuit className="h-4 w-4 text-primary" />
             <span className="font-semibold text-sm tracking-tight">
               {hasParentProblem ? 'Solving Subproblem' : `Problem ${id}`}
@@ -385,7 +394,7 @@ export default function SolvePage() {
               variant="outline"
               size="sm"
               onClick={handleSwitchToParent}
-              className="hover:bg-violet-50 hover:text-violet-600 hover:border-violet-200 dark:hover:bg-violet-900/20 dark:hover:text-violet-500 dark:hover:border-violet-900 transition-all"
+              className="hover:bg-secondary hover:text-foreground hover:border-border transition-all"
             >
               <ArrowUp className="w-4 h-4 mr-2" />
               Parent Problem
@@ -397,7 +406,7 @@ export default function SolvePage() {
             size="sm"
             onClick={handleStuck}
             disabled={isStuckLoading}
-            className="hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200 dark:hover:bg-amber-900/20 dark:hover:text-amber-500 dark:hover:border-amber-900 transition-all"
+            className="hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all"
           >
             {isStuckLoading ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -412,7 +421,7 @@ export default function SolvePage() {
             size="sm"
             onClick={handleCheckThinking}
             disabled={isCheckLoading}
-            className="hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 dark:hover:bg-blue-900/20 dark:hover:text-blue-500 dark:hover:border-blue-900 transition-all"
+            className="hover:bg-accent/10 hover:text-accent hover:border-accent/30 transition-all"
           >
             {isCheckLoading ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -443,7 +452,7 @@ export default function SolvePage() {
             size="sm"
             onClick={handleDone}
             disabled={isDoneLoading}
-            className="glass-button bg-emerald-600 hover:bg-emerald-500 text-white border-0 shadow-emerald-500/20"
+            className="glass-button"
           >
             {isDoneLoading ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -461,11 +470,11 @@ export default function SolvePage() {
             variant={isChatOpen ? "secondary" : "ghost"}
             size="icon"
             onClick={() => setIsChatOpen(!isChatOpen)}
-            className={cn("relative rounded-full transition-all", isChatOpen ? "bg-primary/10 text-primary" : "text-muted-foreground")}
+            className={cn("relative rounded-full transition-all", isChatOpen ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground")}
           >
             <MessageSquare className="h-5 w-5" />
             {!isChatOpen && hasUnreadMessages && (
-              <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500 animate-pulse ring-2 ring-background" />
+              <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-primary animate-pulse ring-2 ring-background" />
             )}
           </Button>
         </div>
@@ -476,7 +485,7 @@ export default function SolvePage() {
             size="sm"
             onClick={handleDone}
             disabled={isDoneLoading}
-            className="glass-button bg-emerald-600 hover:bg-emerald-500 text-white border-0 shadow-emerald-500/20"
+            className="glass-button"
           >
             {isDoneLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -489,11 +498,11 @@ export default function SolvePage() {
             variant={isChatOpen ? "secondary" : "ghost"}
             size="icon"
             onClick={() => setIsChatOpen(!isChatOpen)}
-            className={cn("relative rounded-full transition-all", isChatOpen ? "bg-primary/10 text-primary" : "text-muted-foreground")}
+            className={cn("relative rounded-full transition-all", isChatOpen ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground")}
           >
             <MessageSquare className="h-5 w-5" />
             {!isChatOpen && hasUnreadMessages && (
-              <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500 animate-pulse ring-2 ring-background" />
+              <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-primary animate-pulse ring-2 ring-background" />
             )}
           </Button>
 
@@ -594,11 +603,9 @@ export default function SolvePage() {
       {/* Main Content Area */}
       <div className="flex flex-1 flex-col overflow-hidden relative group/layout z-10">
 
-        {/* Split View: Top Problem (Increased height to ~45% to fix cutoff) */}
-        <div className="h-[45%] min-h-[300px] border-b border-border/40 shrink-0 relative overflow-hidden flex flex-col shadow-sm z-10 transition-all duration-500 ease-in-out">
-          <div className="absolute inset-0 bg-background/40 backdrop-blur-sm z-0" />
-          {/* Subtle Grid Pattern */}
-          <div className="absolute inset-0 bg-grid-zinc-200/50 dark:bg-grid-zinc-800/20 [mask-image:linear-gradient(to_bottom,black,transparent)] pointer-events-none z-0 opactiy-50" />
+        {/* Split View: Top Problem */}
+        <div className="h-[45%] min-h-[300px] border-b border-border/50 shrink-0 relative overflow-hidden flex flex-col z-10 transition-all duration-500 ease-in-out">
+          <div className="absolute inset-0 bg-card/50 z-0" />
 
           <div className="flex-1 overflow-hidden relative z-10">
             <ProblemHeader

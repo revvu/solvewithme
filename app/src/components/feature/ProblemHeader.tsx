@@ -73,9 +73,9 @@ export function ProblemHeader({
   const showImage = problemData?.imageUrl && !displayData.content;
 
   return (
-    <div className="h-full w-full flex flex-col font-sans bg-background/50">
+    <div className="h-full w-full flex flex-col font-sans">
       {/* Breadcrumbs / Meta Bar */}
-      <div className="flex items-center gap-2 px-6 py-3 border-b border-border/40 bg-background/50 backdrop-blur-sm text-xs font-medium text-muted-foreground overflow-x-auto">
+      <div className="flex items-center gap-2 px-6 py-3 border-b border-border/50 bg-card/60 text-xs font-medium text-muted-foreground overflow-x-auto">
         {problemStack && problemStack.length > 0 ? (
           // Render dynamic breadcrumbs based on problem stack
           problemStack.map((item, index) => {
@@ -134,28 +134,23 @@ export function ProblemHeader({
             />
           </div>
         ) : (
-          // Normal display
-          <div className="space-y-6 animate-in fade-in duration-500 mx-auto max-w-4xl">
+          // Normal display - Warm Scholar aesthetic
+          <div className="space-y-5 animate-in fade-in duration-500 mx-auto max-w-4xl">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Badge variant="outline" className="rounded-full px-3 py-1 text-xs font-bold tracking-wide uppercase bg-primary/5 text-primary border-primary/20">
+                <Badge variant="outline" className="rounded-md px-2.5 py-1 text-xs font-semibold tracking-wide uppercase bg-primary/10 text-primary border-primary/25">
                   {isSubproblem ? 'Subproblem' : displayData.category}
                 </Badge>
-                <span className="text-sm font-medium text-muted-foreground tracking-wide">
+                <span className="text-sm text-muted-foreground font-serif italic">
                   {isSubproblem ? 'Build Your Understanding' : displayData.title}
                 </span>
               </div>
             </div>
 
-            {/* Premium Problem Card */}
-            <div className="relative group rounded-2xl p-6 sm:p-8 bg-background/40 border border-white/20 dark:border-white/10 shadow-2xl shadow-primary/5 backdrop-blur-xl transition-all duration-300 hover:shadow-primary/10 hover:border-primary/20 hover:bg-background/60">
-              {/* Decorative Elements */}
-              <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none transition-transform duration-700 group-hover:rotate-12 group-hover:scale-110">
-                <Layers className="w-32 h-32" />
-              </div>
-
-              <div className="prose prose-zinc dark:prose-invert max-w-none relative z-10">
-                <div className="text-xl sm:text-2xl font-medium leading-relaxed text-foreground tracking-tight select-text">
+            {/* Problem Card - Warm Scholar Design */}
+            <div className="problem-card p-6 sm:p-8">
+              <div className="prose prose-stone dark:prose-invert max-w-none">
+                <div className="text-xl sm:text-2xl font-serif font-normal leading-relaxed text-foreground tracking-tight select-text">
                   <LatexRenderer>{displayData.content}</LatexRenderer>
                 </div>
               </div>
@@ -186,19 +181,21 @@ export function ProblemHeader({
 
 function ProblemCard({ category, title, content }: { category: string, title: string, content: string }) {
   return (
-    <div className="relative group rounded-2xl p-6 sm:p-8 bg-gradient-to-br from-background via-muted/20 to-muted/40 border border-border/50 shadow-xl shadow-primary/5 backdrop-blur-xl transition-all duration-300">
-      <div className="flex items-center gap-3 mb-6">
-        <Badge variant="outline" className="rounded-full px-3 py-1 text-xs font-bold tracking-wide uppercase bg-primary/5 text-primary border-primary/20">
+    <div className="space-y-5">
+      <div className="flex items-center gap-3">
+        <Badge variant="outline" className="rounded-md px-2.5 py-1 text-xs font-semibold tracking-wide uppercase bg-primary/10 text-primary border-primary/25">
           {category}
         </Badge>
-        <span className="text-sm font-medium text-muted-foreground tracking-wide">
+        <span className="text-sm text-muted-foreground font-serif italic">
           {title}
         </span>
       </div>
 
-      <div className="prose prose-zinc dark:prose-invert max-w-none relative z-10">
-        <div className="text-xl sm:text-2xl font-medium leading-relaxed text-foreground tracking-tight">
-          <LatexRenderer>{content}</LatexRenderer>
+      <div className="problem-card p-6 sm:p-8">
+        <div className="prose prose-stone dark:prose-invert max-w-none">
+          <div className="text-xl sm:text-2xl font-serif font-normal leading-relaxed text-foreground tracking-tight">
+            <LatexRenderer>{content}</LatexRenderer>
+          </div>
         </div>
       </div>
     </div>

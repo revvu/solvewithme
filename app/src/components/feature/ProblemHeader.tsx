@@ -148,14 +148,14 @@ export function ProblemHeader({
             </div>
 
             {/* Premium Problem Card */}
-            <div className="relative group rounded-2xl p-6 sm:p-8 bg-gradient-to-br from-background via-muted/20 to-muted/40 border border-border/50 shadow-xl shadow-primary/5 backdrop-blur-xl transition-all duration-300 hover:shadow-primary/10 hover:border-primary/20">
+            <div className="relative group rounded-2xl p-6 sm:p-8 bg-background/40 border border-white/20 dark:border-white/10 shadow-2xl shadow-primary/5 backdrop-blur-xl transition-all duration-300 hover:shadow-primary/10 hover:border-primary/20 hover:bg-background/60">
               {/* Decorative Elements */}
-              <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-                <Layers className="w-24 h-24 rotate-12" />
+              <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none transition-transform duration-700 group-hover:rotate-12 group-hover:scale-110">
+                <Layers className="w-32 h-32" />
               </div>
 
               <div className="prose prose-zinc dark:prose-invert max-w-none relative z-10">
-                <div className="text-xl sm:text-2xl font-medium leading-relaxed text-foreground tracking-tight">
+                <div className="text-xl sm:text-2xl font-medium leading-relaxed text-foreground tracking-tight select-text">
                   <LatexRenderer>{displayData.content}</LatexRenderer>
                 </div>
               </div>

@@ -1,7 +1,6 @@
 "use client"
-import { useState, useCallback, useRef, useEffect } from "react"
+import { useState, useCallback, useEffect } from "react"
 import Link from "next/link"
-import dynamic from "next/dynamic"
 import { useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, MessageSquare, CheckCircle, HelpCircle, BrainCircuit, Lightbulb, Eye, ArrowUp, Loader2, Menu, X } from "lucide-react"
@@ -11,11 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { cn } from "@/lib/utils"
 
-// Dynamic import for Canvas to avoid SSR issues with window object
-const CanvasBoard = dynamic(
-  () => import("@/components/feature/CanvasBoard").then((mod) => mod.CanvasBoard),
-  { ssr: false, loading: () => <div className="w-full h-full bg-zinc-50 dark:bg-zinc-900 animate-pulse" /> }
-)
+import { ScratchWorkUpload } from "@/components/feature/ScratchWorkUpload"
 
 // Problem data from API
 interface ProblemData {
@@ -72,8 +67,8 @@ export default function SolvePage() {
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false)
 
-  // Canvas ref for getting user work
-  const canvasRef = useRef<{ getDataURL: () => string } | null>(null)
+  // Scratch work images (base64)
+  const [scratchWorkImages, setScratchWorkImages] = useState<string[]>([])
 
   // Track unread messages when chat is closed
   useEffect(() => {
@@ -138,7 +133,7 @@ export default function SolvePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           problemId: currentProblem.id,
-          userWorkImages: [],
+          userWorkImages: scratchWorkImages,
           userText: ''
         })
       })
@@ -180,7 +175,7 @@ export default function SolvePage() {
     } finally {
       setIsStuckLoading(false)
     }
-  }, [currentProblem.id, addMessage])
+  }, [currentProblem.id, scratchWorkImages, addMessage])
 
   // Handle "Check My Thinking" button
   const handleCheckThinking = useCallback(async () => {
@@ -193,7 +188,7 @@ export default function SolvePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           problemId: currentProblem.id,
-          userWorkImages: [],
+          userWorkImages: scratchWorkImages,
           userText: ''
         })
       })
@@ -217,7 +212,7 @@ export default function SolvePage() {
     } finally {
       setIsCheckLoading(false)
     }
-  }, [currentProblem.id, addMessage])
+  }, [currentProblem.id, scratchWorkImages, addMessage])
 
   // Handle "Reveal Solution" button - opens confirmation modal
   const handleRevealClick = useCallback(() => {
@@ -278,7 +273,7 @@ export default function SolvePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           subproblemId: currentProblem.id,
-          userWorkImages: [],
+          userWorkImages: scratchWorkImages,
           userText: ''
         })
       })
@@ -317,7 +312,7 @@ export default function SolvePage() {
     } finally {
       setIsDoneLoading(false)
     }
-  }, [currentProblem.id, hasParentProblem, addMessage])
+  }, [currentProblem.id, scratchWorkImages, hasParentProblem, addMessage])
 
   // Handle "Switch to Parent" button
   const handleSwitchToParent = useCallback(() => {
@@ -608,10 +603,11 @@ export default function SolvePage() {
           </div>
         </div>
 
-        {/* Canvas Area (Remaining Height) */}
-        <div className="flex-1 relative overflow-hidden bg-background cursor-crosshair">
-          <CanvasBoard />
-        </div>
+        {/* Scratch Work Upload Area (Remaining Height) */}
+        <ScratchWorkUpload
+          images={scratchWorkImages}
+          onImagesChange={setScratchWorkImages}
+        />
 
         {/* Chat Panel Overlay/Sidebar */}
         <ChatPanel

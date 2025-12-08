@@ -1,5 +1,5 @@
 "use client"
-import React, { useRef, useState, useEffect, useCallback } from "react"
+import React, { useRef, useState, useEffect, useCallback, useLayoutEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Undo, RotateCcw, Eraser, Highlighter, Minus, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -39,6 +39,7 @@ export function CanvasBoard() {
   // History management
   const [strokes, setStrokes] = useState<Stroke[]>([])
   const [currentStroke, setCurrentStroke] = useState<Point[]>([])
+  const [canvasSize, setCanvasSize] = useState({ width: 300, height: 150 })
 
   // Initialize
   useEffect(() => {
@@ -46,24 +47,32 @@ export function CanvasBoard() {
   }, [])
 
   // Canvas resize handler
-  useEffect(() => {
-    if (!containerRef.current || !canvasRef.current) return
+  useLayoutEffect(() => {
+    if (!containerRef.current) return
 
-    const resizeCanvas = () => {
-      const parent = containerRef.current
-      const canvas = canvasRef.current
-      if (parent && canvas) {
-        canvas.width = parent.clientWidth
-        canvas.height = parent.clientHeight
-        redraw()
-      }
+    const updateCanvasSize = (width: number, height: number) => {
+      setCanvasSize({ width, height })
     }
 
-    window.addEventListener('resize', resizeCanvas)
-    resizeCanvas() // Initial size
+    // Initial size
+    if (containerRef.current) {
+      updateCanvasSize(containerRef.current.clientWidth, containerRef.current.clientHeight)
+    }
 
-    return () => window.removeEventListener('resize', resizeCanvas)
-  }, [strokes]) // Re-bind when strokes change to ensure redraw works
+    // Use ResizeObserver for robust size tracking
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        updateCanvasSize(entry.contentRect.width, entry.contentRect.height)
+      }
+    })
+
+    resizeObserver.observe(containerRef.current)
+
+    return () => {
+      resizeObserver.disconnect()
+    }
+  }, [])
+
 
   // Redraw function
   const redraw = useCallback(() => {
@@ -104,12 +113,14 @@ export function CanvasBoard() {
 
     // Reset composite operation
     ctx.globalCompositeOperation = 'source-over'
-  }, [strokes])
+  }, [strokes]) // Removed canvasSize dependancy to avoid loop, redraw uses current canvas ref
 
-  // Effect to trigger redraw when strokes change
+  // Effect to trigger redraw when strokes change or size changes
   useEffect(() => {
+    // We need to wait for the canvas to actually have the new size?
+    // React updates props, then effects run. So logic is fine.
     redraw()
-  }, [strokes, redraw])
+  }, [strokes, canvasSize, redraw])
 
   // Update brush size when tool changes
   useEffect(() => {
@@ -247,7 +258,10 @@ export function CanvasBoard() {
   return (
     <div ref={containerRef} className="relative w-full h-full bg-white cursor-crosshair overflow-hidden touch-none">
       <canvas
+        id="main-board-canvas"
         ref={canvasRef}
+        width={canvasSize.width}
+        height={canvasSize.height}
         className="touch-none absolute inset-0"
         onMouseDown={startDrawing}
         onMouseMove={draw}

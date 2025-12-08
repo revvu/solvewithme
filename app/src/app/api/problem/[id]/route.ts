@@ -12,6 +12,12 @@ export async function GET(
       return NextResponse.json({ error: 'Problem ID is required' }, { status: 400 });
     }
 
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(id)) {
+      return NextResponse.json({ error: 'Invalid Problem ID format' }, { status: 400 });
+    }
+
     const problem = await prisma.problemNode.findUnique({
       where: { id },
       include: {

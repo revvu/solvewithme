@@ -33,13 +33,18 @@ export const llmService = {
     try {
       const response = await getOpenAI().responses.create({
         model: getModel(),
-        instructions: `You are an expert at reading and transcribing math and science problems from images.
+        instructions: `You are an expert at extracting specific problem text from images, filtering out all irrelevant noise.
 
 Your task is to:
-1. Carefully read the problem from the image
-2. Transcribe it accurately, preserving all mathematical notation
-3. Use LaTeX notation for all math expressions (e.g., $x^2$, $\\frac{a}{b}$, $\\int$)
-4. Identify the subject/category of the problem`,
+1. IDENTIFY the main problem statement.
+2. IGNORE ALL surrounding text, such as:
+   - Page numbers, headers, footers
+   - Chapter titles, section numbers (unless part of the problem)
+   - "Exercise 1.2", "Problem 5", etc. (remove these labels)
+   - Scratch work or handwritten notes around the printed text
+3. Transcribe ONLY the problem text accurately.
+4. Use LaTeX for ALL math expressions (e.g., $x^2$, $\\frac{a}{b}$).
+5. Identify the subject/category.`,
         input: [
           {
             role: 'user',

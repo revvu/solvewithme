@@ -352,10 +352,16 @@ export default function SolvePage() {
   }, [addMessage])
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-background font-sans transition-colors selection:bg-primary/20">
+    <div className="flex flex-col h-screen overflow-hidden bg-background font-sans transition-colors selection:bg-primary/20 relative">
+
+      {/* Premium Background Effects */}
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/5 blur-[120px] mix-blend-multiply dark:mix-blend-screen animate-pulse" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-blue-500/5 blur-[120px] mix-blend-multiply dark:mix-blend-screen animate-pulse delay-1000" />
+      </div>
 
       {/* Premium Header */}
-      <header className="h-16 flex items-center justify-between px-4 sm:px-6 border-b border-border/40 bg-background/80 backdrop-blur-md z-30 shrink-0 relative">
+      <header className="h-16 flex items-center justify-between px-4 sm:px-6 border-b border-border/40 bg-background/60 backdrop-blur-xl z-30 shrink-0 relative supports-[backdrop-filter]:bg-background/60">
         <div className="flex items-center gap-4">
           <Link href="/">
             <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground rounded-full hover:bg-primary/10">
@@ -586,11 +592,14 @@ export default function SolvePage() {
       </Dialog>
 
       {/* Main Content Area */}
-      <div className="flex flex-1 flex-col overflow-hidden relative group/layout">
+      <div className="flex flex-1 flex-col overflow-hidden relative group/layout z-10">
 
-        {/* Split View: Top Problem (Fixed 30% initially, resizable in future) */}
-        <div className="h-[30%] min-h-[200px] border-b border-border/40 bg-muted/30 shrink-0 relative overflow-hidden flex flex-col shadow-inner z-10">
-          <div className="absolute inset-0 bg-grid-zinc-200/50 dark:bg-grid-zinc-800/20 [mask-image:linear-gradient(to_bottom,white,transparent)] pointer-events-none" />
+        {/* Split View: Top Problem (Increased height to ~45% to fix cutoff) */}
+        <div className="h-[45%] min-h-[300px] border-b border-border/40 shrink-0 relative overflow-hidden flex flex-col shadow-sm z-10 transition-all duration-500 ease-in-out">
+          <div className="absolute inset-0 bg-background/40 backdrop-blur-sm z-0" />
+          {/* Subtle Grid Pattern */}
+          <div className="absolute inset-0 bg-grid-zinc-200/50 dark:bg-grid-zinc-800/20 [mask-image:linear-gradient(to_bottom,black,transparent)] pointer-events-none z-0 opactiy-50" />
+
           <div className="flex-1 overflow-hidden relative z-10">
             <ProblemHeader
               problemId={currentProblem.id}

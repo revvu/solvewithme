@@ -1,7 +1,7 @@
 "use client"
 import { Badge } from "@/components/ui/badge"
 import { LatexRenderer } from "@/components/ui/LatexRenderer"
-import { ChevronRight, Layers, Loader2, AlertCircle } from "lucide-react"
+import { ChevronRight, Layers, Loader2, AlertCircle, ImageIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface ProblemStackItem {
@@ -68,8 +68,12 @@ export function ProblemHeader({
     }
   }
 
+  // Determine if we should show the image: only if we have an image AND NO problem text
+  // The user explicitly stated: "The image is not needed if the problem is extracted."
+  const showImage = problemData?.imageUrl && !displayData.content;
+
   return (
-    <div className="h-full w-full flex flex-col font-sans">
+    <div className="h-full w-full flex flex-col font-sans bg-background/50">
       {/* Breadcrumbs / Meta Bar */}
       <div className="flex items-center gap-2 px-6 py-3 border-b border-border/40 bg-background/50 backdrop-blur-sm text-xs font-medium text-muted-foreground overflow-x-auto">
         {problemStack && problemStack.length > 0 ? (
@@ -108,64 +112,94 @@ export function ProblemHeader({
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
         {isLoading ? (
           // Loading state
-          <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground">
-            <Loader2 className="h-8 w-8 animate-spin" />
-            <span className="text-sm">Loading problem...</span>
+          <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground animate-pulse">
+            <Loader2 className="h-8 w-8 animate-spin text-primary/50" />
+            <span className="text-sm font-medium">Loading problem...</span>
           </div>
         ) : error ? (
           // Error state - show fallback
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 text-amber-600 dark:text-amber-500 text-sm">
+          <div className="space-y-6 animate-in fade-in duration-500">
+            <div className="flex items-center gap-2 text-amber-600 dark:text-amber-500 text-sm p-3 bg-amber-500/10 rounded-lg border border-amber-500/20">
               <AlertCircle className="h-4 w-4" />
               <span>Using demo problem (database not connected)</span>
             </div>
-            <div className="flex items-center gap-3 mb-4">
-              <Badge variant="secondary" className="rounded-md px-2.5 py-0.5 text-xs font-bold tracking-wide uppercase bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
-                {displayData.category}
-              </Badge>
-              <span className="text-xs font-bold text-muted-foreground tracking-widest uppercase opacity-70">
-                {displayData.title}
-              </span>
-            </div>
-            <div className="prose prose-zinc dark:prose-invert max-w-none">
-              <div className="text-lg sm:text-xl font-medium leading-relaxed text-foreground">
-                <LatexRenderer>{displayData.content}</LatexRenderer>
-              </div>
-            </div>
+
+            <ProblemCard
+              category={displayData.category}
+              title={displayData.title}
+              content={displayData.content}
+            />
           </div>
         ) : (
           // Normal display
-          <>
-            <div className="flex items-center gap-3 mb-4">
-              <Badge variant="secondary" className="rounded-md px-2.5 py-0.5 text-xs font-bold tracking-wide uppercase bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
-                {isSubproblem ? 'Subproblem' : displayData.category}
-              </Badge>
-              <span className="text-xs font-bold text-muted-foreground tracking-widest uppercase opacity-70">
-                {isSubproblem ? 'Build Your Understanding' : displayData.title}
-              </span>
-            </div>
-
-            <div className="prose prose-zinc dark:prose-invert max-w-none">
-              <div className="text-lg sm:text-xl font-medium leading-relaxed text-foreground">
-                <LatexRenderer>{displayData.content}</LatexRenderer>
+          <div className="space-y-6 animate-in fade-in duration-500 mx-auto max-w-4xl">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Badge variant="outline" className="rounded-full px-3 py-1 text-xs font-bold tracking-wide uppercase bg-primary/5 text-primary border-primary/20">
+                  {isSubproblem ? 'Subproblem' : displayData.category}
+                </Badge>
+                <span className="text-sm font-medium text-muted-foreground tracking-wide">
+                  {isSubproblem ? 'Build Your Understanding' : displayData.title}
+                </span>
               </div>
             </div>
 
-            {/* Show image if available */}
-            {problemData?.imageUrl && (
-              <div className="mt-4 rounded-lg overflow-hidden border border-border/50">
-                <img
-                  src={problemData.imageUrl}
-                  alt="Problem image"
-                  className="max-w-full h-auto"
-                />
+            {/* Premium Problem Card */}
+            <div className="relative group rounded-2xl p-6 sm:p-8 bg-gradient-to-br from-background via-muted/20 to-muted/40 border border-border/50 shadow-xl shadow-primary/5 backdrop-blur-xl transition-all duration-300 hover:shadow-primary/10 hover:border-primary/20">
+              {/* Decorative Elements */}
+              <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                <Layers className="w-24 h-24 rotate-12" />
+              </div>
+
+              <div className="prose prose-zinc dark:prose-invert max-w-none relative z-10">
+                <div className="text-xl sm:text-2xl font-medium leading-relaxed text-foreground tracking-tight">
+                  <LatexRenderer>{displayData.content}</LatexRenderer>
+                </div>
+              </div>
+            </div>
+
+            {/* Show image ONLY if explicitly needed (e.g. no text extracted, or logic dictates) */}
+            {showImage && (
+              <div className="mt-6 rounded-xl overflow-hidden border border-border/50 shadow-md bg-zinc-950/5 dark:bg-zinc-900/50">
+                <div className="p-3 bg-muted/30 border-b border-border/50 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                  <ImageIcon className="w-4 h-4" />
+                  Original Image
+                </div>
+                <div className="p-4 flex justify-center bg-zinc-100/50 dark:bg-zinc-950/50">
+                  <img
+                    src={problemData.imageUrl!}
+                    alt="Problem image"
+                    className="max-w-full max-h-[400px] h-auto rounded-md shadow-sm"
+                  />
+                </div>
               </div>
             )}
-          </>
+          </div>
         )}
+      </div>
+    </div>
+  )
+}
+
+function ProblemCard({ category, title, content }: { category: string, title: string, content: string }) {
+  return (
+    <div className="relative group rounded-2xl p-6 sm:p-8 bg-gradient-to-br from-background via-muted/20 to-muted/40 border border-border/50 shadow-xl shadow-primary/5 backdrop-blur-xl transition-all duration-300">
+      <div className="flex items-center gap-3 mb-6">
+        <Badge variant="outline" className="rounded-full px-3 py-1 text-xs font-bold tracking-wide uppercase bg-primary/5 text-primary border-primary/20">
+          {category}
+        </Badge>
+        <span className="text-sm font-medium text-muted-foreground tracking-wide">
+          {title}
+        </span>
+      </div>
+
+      <div className="prose prose-zinc dark:prose-invert max-w-none relative z-10">
+        <div className="text-xl sm:text-2xl font-medium leading-relaxed text-foreground tracking-tight">
+          <LatexRenderer>{content}</LatexRenderer>
+        </div>
       </div>
     </div>
   )
